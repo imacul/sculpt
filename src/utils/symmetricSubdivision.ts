@@ -1,3 +1,5 @@
+// src/utils/symmetricSubdivision.ts
+
 import * as THREE from 'three';
 
 /**

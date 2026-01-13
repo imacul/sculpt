@@ -1,3 +1,5 @@
+// src/utils/ensureGeometrySymmetry.ts
+
 import * as THREE from 'three';
 
 /**

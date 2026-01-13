@@ -1,3 +1,5 @@
+// src/services/
+
 import * as THREE from "three";
 import { subdivideSymmetrically } from "../../utils/symmetricSubdivision";
 import { ensureGeometrySymmetry } from "../../utils/ensureGeometrySymmetry";
