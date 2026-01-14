@@ -154,10 +154,14 @@ export class PrimitiveFactory {
       box.getSize(size);
       const maxSize = Math.max(size.x, size.y, size.z);
       if (maxSize > 0) {
-        const scale = 1.0 / maxSize;
+        const scale = 3.0 / maxSize; // Scale to a larger default size
         geometry.scale(scale, scale, scale);
       }
     }
+
+    // Correct for coordinate system differences
+    geometry.rotateX(-Math.PI / 2);
+
     geometry.computeBoundingBox();
     geometry.computeBoundingSphere();
   }
