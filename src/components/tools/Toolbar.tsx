@@ -7,6 +7,7 @@ interface ToolbarProps {
   selectedObjectId: string | null;
   onToolChange: (tool: ToolType) => void;
   onPrimitiveSelect: (primitive: PrimitiveType) => void;
+  onFileSelect: (file: File) => void;
 }
 
 export function Toolbar({
@@ -15,6 +16,7 @@ export function Toolbar({
   selectedObjectId,
   onToolChange,
   onPrimitiveSelect,
+  onFileSelect,
 }: ToolbarProps) {
   const hasSelectedObject = selectedObjectId !== null;
 
@@ -106,6 +108,39 @@ export function Toolbar({
               <span style={{ fontSize: '8px', marginTop: '2px' }}>{primitive.label}</span>
             </button>
           ))}
+          <input
+            type="file"
+            accept=".glb,.gltf,.obj,.stl,.ply"
+            style={{ display: 'none' }}
+            id="import-model"
+            onChange={(e) => {
+              if (e.target.files && e.target.files[0]) {
+                onFileSelect(e.target.files[0]);
+              }
+            }}
+          />
+          <label
+            htmlFor="import-model"
+            style={{
+              width: '45px',
+              height: '45px',
+              backgroundColor: '#2c2c2c',
+              border: 'none',
+              borderRadius: '6px',
+              color: 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease',
+              fontSize: '18px',
+            }}
+            title="Import Model"
+          >
+            <span>📁</span>
+            <span style={{ fontSize: '8px', marginTop: '2px' }}>Import</span>
+          </label>
         </div>
       )}
     </div>
