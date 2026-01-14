@@ -21,27 +21,27 @@ interface SceneObjectData {
 
 interface GlobalState {
   objects: SceneObjectState[];
-  selectedObjectId: string | null;
+  selectedObjectIds: string[];
   timestamp: number;
 }
 
 interface UseSceneUndoParams {
   objects: SceneObjectData[];
   objectGeometries: Record<string, THREE.BufferGeometry>;
-  selectedObjectId: string | null;
+  selectedObjectIds: string[];
   setObjects: React.Dispatch<React.SetStateAction<SceneObjectData[]>>;
   setObjectGeometries: React.Dispatch<React.SetStateAction<Record<string, THREE.BufferGeometry>>>;
-  setSelectedObjectId: React.Dispatch<React.SetStateAction<string | null>>;
+  setSelectedObjectIds: React.Dispatch<React.SetStateAction<string[]>>;
   maxHistorySize?: number;
 }
 
 export function useSceneUndo({
   objects,
   objectGeometries,
-  selectedObjectId,
+  selectedObjectIds,
   setObjects,
   setObjectGeometries,
-  setSelectedObjectId,
+  setSelectedObjectIds,
   maxHistorySize = 50,
 }: UseSceneUndoParams) {
   const [, forceUpdate] = useState(0);

@@ -15,8 +15,8 @@ interface PlacementData {
 
 interface PlacementHandlerProps {
   isActive: boolean;
-  selectedPrimitive: PrimitiveType | null;
-  onPlaceObject: (type: PrimitiveType, position: [number, number, number], scale: number, rotation: [number, number, number], initialGeometry?: THREE.BufferGeometry) => void;
+  selectedPrimitive: PrimitiveType;
+  onPlaceObject: (type: PrimitiveType, position: [number, number, number], scale: number, rotation: [number, number, number]) => void;
 }
 
 export function PlacementHandler({

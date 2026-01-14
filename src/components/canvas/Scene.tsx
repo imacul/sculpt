@@ -18,7 +18,7 @@ interface SceneObjectData {
 interface SceneProps {
   objects: SceneObjectData[];
   objectGeometries: Record<string, THREE.BufferGeometry>;
-  selectedObjectId: string | null;
+  selectedObjectIds: string[];
   currentTool: ToolType;
   selectedPrimitive: PrimitiveType;
   brushSize: number;

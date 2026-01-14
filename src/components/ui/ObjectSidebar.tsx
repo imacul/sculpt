@@ -9,7 +9,7 @@ interface SceneObjectData {
 }
 
 interface ObjectSidebarProps {
-  selectedObjectId: string | null;
+  selectedObjectIds: string[];
   objects: SceneObjectData[];
   selectedRenderMode: 'shaded' | 'mesh';
   objectVertexCounts: Record<string, number>;
@@ -22,7 +22,7 @@ interface ObjectSidebarProps {
 }
 
 export function ObjectSidebar({
-  selectedObjectId,
+  selectedObjectIds,
   objects,
   selectedRenderMode,
   objectVertexCounts,
@@ -33,13 +33,14 @@ export function ObjectSidebar({
   onObjectRotationChange,
   onObjectScaleChange,
 }: ObjectSidebarProps) {
-  const selectedObject = objects.find(obj => obj.id === selectedObjectId);
+  const selectionCount = selectedObjectIds.length;
+  const selectedObject = objects.find(obj => obj.id === selectedObjectIds[0]);
 
-  if (!selectedObjectId || !selectedObject) {
+  if (selectionCount === 0) {
     return null;
   }
 
-  const vertexCount = objectVertexCounts[selectedObjectId] || 0;
+  const totalVertexCount = selectedObjectIds.reduce((acc, id) => acc + (objectVertexCounts[id] || 0), 0);
 
   return (
     <div style={{
@@ -78,15 +79,28 @@ export function ObjectSidebar({
 
       {/* Object Info */}
       <div style={{ marginBottom: '15px' }}>
-        <div style={{ marginBottom: '5px' }}>
-          <strong>Type:</strong> {selectedObject.type}
-        </div>
-        <div style={{ marginBottom: '5px' }}>
-          <strong>ID:</strong> {selectedObjectId.substring(0, 8)}...
-        </div>
-        <div style={{ marginBottom: '5px' }}>
-          <strong>Vertices:</strong> {vertexCount.toLocaleString()}
-        </div>
+        {selectionCount > 1 ? (
+          <>
+            <div style={{ marginBottom: '5px' }}>
+              <strong>{selectionCount} objects selected</strong>
+            </div>
+            <div style={{ marginBottom: '5px' }}>
+              <strong>Total Vertices:</strong> {totalVertexCount.toLocaleString()}
+            </div>
+          </>
+        ) : selectedObject && (
+          <>
+            <div style={{ marginBottom: '5px' }}>
+              <strong>Type:</strong> {selectedObject.type}
+            </div>
+            <div style={{ marginBottom: '5px' }}>
+              <strong>ID:</strong> {selectedObject.id.substring(0, 8)}...
+            </div>
+            <div style={{ marginBottom: '5px' }}>
+              <strong>Vertices:</strong> {(objectVertexCounts[selectedObject.id] || 0).toLocaleString()}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Render Mode */}
@@ -128,91 +142,96 @@ export function ObjectSidebar({
         </div>
       </div>
 
-      {/* Position Controls */}
-      <div style={{ marginBottom: '15px' }}>
-        <strong>Position:</strong>
-        <div style={{ display: 'flex', gap: '5px', marginTop: '5px' }}>
-          {['X', 'Y', 'Z'].map((axis, index) => (
-            <div key={axis} style={{ flex: 1 }}>
-              <label style={{ fontSize: '10px', color: '#aaa' }}>{axis}</label>
-              <input
-                type="number"
-                value={selectedObject.position[index].toFixed(2)}
-                step="0.1"
-                onChange={(e) => {
-                  const newPos = [...selectedObject.position] as [number, number, number];
-                  newPos[index] = parseFloat(e.target.value) || 0;
-                  onObjectPositionChange(selectedObjectId, newPos);
-                }}
-                style={{
-                  width: '100%',
-                  padding: '2px',
-                  backgroundColor: '#1a1a1a',
-                  border: '1px solid #333',
-                  color: 'white',
-                  borderRadius: '2px',
-                  fontSize: '11px',
-                }}
-              />
+      {/* Transform Controls (only for single selection) */}
+      {selectionCount === 1 && selectedObject && (
+        <>
+          {/* Position Controls */}
+          <div style={{ marginBottom: '15px' }}>
+            <strong>Position:</strong>
+            <div style={{ display: 'flex', gap: '5px', marginTop: '5px' }}>
+              {['X', 'Y', 'Z'].map((axis, index) => (
+                <div key={axis} style={{ flex: 1 }}>
+                  <label style={{ fontSize: '10px', color: '#aaa' }}>{axis}</label>
+                  <input
+                    type="number"
+                    value={selectedObject.position[index].toFixed(2)}
+                    step="0.1"
+                    onChange={(e) => {
+                      const newPos = [...selectedObject.position] as [number, number, number];
+                      newPos[index] = parseFloat(e.target.value) || 0;
+                      onObjectPositionChange(selectedObject.id, newPos);
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '2px',
+                      backgroundColor: '#1a1a1a',
+                      border: '1px solid #333',
+                      color: 'white',
+                      borderRadius: '2px',
+                      fontSize: '11px',
+                    }}
+                  />
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
 
-      {/* Rotation Controls */}
-      <div style={{ marginBottom: '15px' }}>
-        <strong>Rotation:</strong>
-        <div style={{ display: 'flex', gap: '5px', marginTop: '5px' }}>
-          {['X', 'Y', 'Z'].map((axis, index) => (
-            <div key={axis} style={{ flex: 1 }}>
-              <label style={{ fontSize: '10px', color: '#aaa' }}>{axis}°</label>
-              <input
-                type="number"
-                value={(selectedObject.rotation[index] * 180 / Math.PI).toFixed(0)}
-                step="5"
-                onChange={(e) => {
-                  const newRot = [...selectedObject.rotation] as [number, number, number];
-                  newRot[index] = (parseFloat(e.target.value) || 0) * Math.PI / 180;
-                  onObjectRotationChange(selectedObjectId, newRot);
-                }}
-                style={{
-                  width: '100%',
-                  padding: '2px',
-                  backgroundColor: '#1a1a1a',
-                  border: '1px solid #333',
-                  color: 'white',
-                  borderRadius: '2px',
-                  fontSize: '11px',
-                }}
-              />
+          {/* Rotation Controls */}
+          <div style={{ marginBottom: '15px' }}>
+            <strong>Rotation:</strong>
+            <div style={{ display: 'flex', gap: '5px', marginTop: '5px' }}>
+              {['X', 'Y', 'Z'].map((axis, index) => (
+                <div key={axis} style={{ flex: 1 }}>
+                  <label style={{ fontSize: '10px', color: '#aaa' }}>{axis}°</label>
+                  <input
+                    type="number"
+                    value={(selectedObject.rotation[index] * 180 / Math.PI).toFixed(0)}
+                    step="5"
+                    onChange={(e) => {
+                      const newRot = [...selectedObject.rotation] as [number, number, number];
+                      newRot[index] = (parseFloat(e.target.value) || 0) * Math.PI / 180;
+                      onObjectRotationChange(selectedObject.id, newRot);
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '2px',
+                      backgroundColor: '#1a1a1a',
+                      border: '1px solid #333',
+                      color: 'white',
+                      borderRadius: '2px',
+                      fontSize: '11px',
+                    }}
+                  />
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
 
-      {/* Scale Controls */}
-      <div style={{ marginBottom: '15px' }}>
-        <label style={{ display: 'block', marginBottom: '5px' }}>
-          <strong>Scale:</strong> {selectedObject.scale[0].toFixed(2)}
-        </label>
-        <input
-          type="range"
-          min="0.1"
-          max="5"
-          step="0.1"
-          value={selectedObject.scale[0]}
-          onChange={(e) => {
-            const newScale = parseFloat(e.target.value);
-            onObjectScaleChange(selectedObjectId, [newScale, newScale, newScale]);
-          }}
-          style={{ width: '100%' }}
-        />
-      </div>
+          {/* Scale Controls */}
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '5px' }}>
+              <strong>Scale:</strong> {selectedObject.scale[0].toFixed(2)}
+            </label>
+            <input
+              type="range"
+              min="0.1"
+              max="5"
+              step="0.1"
+              value={selectedObject.scale[0]}
+              onChange={(e) => {
+                const newScale = parseFloat(e.target.value);
+                onObjectScaleChange(selectedObject.id, [newScale, newScale, newScale]);
+              }}
+              style={{ width: '100%' }}
+            />
+          </div>
+        </>
+      )}
 
       {/* Actions */}
       <div>
         <button
-          onClick={() => onDeleteObject(selectedObjectId)}
+          onClick={() => selectedObjectIds.forEach(id => onDeleteObject(id))}
           style={{
             width: '100%',
             padding: '8px',
@@ -226,7 +245,7 @@ export function ObjectSidebar({
           onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f44336'}
           onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#d32f2f'}
         >
-          Delete Object
+          Delete {selectionCount > 1 ? `${selectionCount} Objects` : 'Object'}
         </button>
       </div>
     </div>
