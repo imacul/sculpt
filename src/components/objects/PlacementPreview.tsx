@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import type { PrimitiveType } from '../../types';
 
 interface PlacementPreviewProps {
-  type: PrimitiveType;
+  type: PrimitiveType | null;
   position: [number, number, number];
   scale: number;
   rotation: [number, number, number];
@@ -11,6 +11,7 @@ interface PlacementPreviewProps {
 
 export function PlacementPreview({ type, position, scale, rotation }: PlacementPreviewProps) {
   const geometry = useMemo(() => {
+    if (!type) return null;
     // Use adaptive subdivision for preview too
     const targetEdgeLength = 0.1; // Smaller target edge length for finer meshes
 
@@ -63,6 +64,8 @@ export function PlacementPreview({ type, position, scale, rotation }: PlacementP
     }
     return geo;
   }, [type, scale]);
+
+  if (!geometry) return null;
 
   return (
     <mesh

@@ -1,5 +1,10 @@
 import * as THREE from 'three';
 import type { PrimitiveType } from '../../types';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
+import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
+import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 /**
  * Factory for creating primitive geometries with adaptive subdivision
@@ -38,6 +43,123 @@ export class PrimitiveFactory {
     // Configure geometry for dynamic updates
     this.configureGeometry(geometry);
     return geometry;
+  }
+
+  static createGeometryFromFile(file: File): Promise<THREE.BufferGeometry> {
+    return new Promise((resolve, reject) => {
+      const extension = file.name.split('.').pop()?.toLowerCase();
+      const reader = new FileReader();
+
+      reader.onload = (event) => {
+        const contents = event.target?.result;
+        if (!contents) {
+          return reject(new Error('Failed to read file.'));
+        }
+
+        const onGeometriesLoaded = (geometries: THREE.BufferGeometry[], errorMsg: string) => {
+          if (geometries.length > 0) {
+            const geometry = BufferGeometryUtils.mergeGeometries(geometries);
+            this.normalizeGeometry(geometry);
+            this.configureGeometry(geometry);
+            resolve(geometry);
+          } else {
+            reject(new Error(errorMsg));
+          }
+        };
+
+        try {
+          switch (extension) {
+            case 'glb':
+            case 'gltf': {
+              const loader = new GLTFLoader();
+              loader.parse(
+                contents as ArrayBuffer,
+                '',
+                (gltf) => {
+                  const geometries: THREE.BufferGeometry[] = [];
+                  gltf.scene.traverse((child) => {
+                    if ((child as THREE.Mesh).isMesh) {
+                      geometries.push((child as THREE.Mesh).geometry);
+                    }
+                  });
+                  onGeometriesLoaded(geometries, 'No mesh found in GLTF file.');
+                },
+                (error) => reject(error)
+              );
+              break;
+            }
+            case 'obj': {
+              const loader = new OBJLoader();
+              const group = loader.parse(contents as string);
+              const geometries: THREE.BufferGeometry[] = [];
+              group.traverse((child) => {
+                if ((child as THREE.Mesh).isMesh) {
+                  geometries.push((child as THREE.Mesh).geometry);
+                }
+              });
+              onGeometriesLoaded(geometries, 'No mesh found in OBJ file.');
+              break;
+            }
+            case 'stl': {
+              const loader = new STLLoader();
+              const geometry = loader.parse(contents as ArrayBuffer);
+              if (geometry) {
+                this.normalizeGeometry(geometry);
+                this.configureGeometry(geometry);
+                resolve(geometry);
+              } else {
+                reject(new Error('Failed to parse STL file.'));
+              }
+              break;
+            }
+            case 'ply': {
+              const loader = new PLYLoader();
+              const geometry = loader.parse(contents as ArrayBuffer);
+              if (geometry) {
+                this.normalizeGeometry(geometry);
+                this.configureGeometry(geometry);
+                resolve(geometry);
+              } else {
+                reject(new Error('Failed to parse PLY file.'));
+              }
+              break;
+            }
+            default:
+              reject(new Error(`Unsupported file type: ${extension}`));
+          }
+        } catch (error) {
+          reject(error);
+        }
+      };
+
+      reader.onerror = (error) => reject(error);
+
+      if (extension === 'obj') {
+        reader.readAsText(file);
+      } else {
+        reader.readAsArrayBuffer(file);
+      }
+    });
+  }
+
+  private static normalizeGeometry(geometry: THREE.BufferGeometry): void {
+    geometry.computeBoundingBox();
+    const box = geometry.boundingBox;
+    if (box) {
+      const center = new THREE.Vector3();
+      box.getCenter(center);
+      geometry.translate(-center.x, -center.y, -center.z);
+
+      const size = new THREE.Vector3();
+      box.getSize(size);
+      const maxSize = Math.max(size.x, size.y, size.z);
+      if (maxSize > 0) {
+        const scale = 1.0 / maxSize;
+        geometry.scale(scale, scale, scale);
+      }
+    }
+    geometry.computeBoundingBox();
+    geometry.computeBoundingSphere();
   }
 
   private static createSphere(avgScale: number): THREE.BufferGeometry {

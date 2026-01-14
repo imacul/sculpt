@@ -155,6 +155,35 @@ export function ModelingCanvas() {
     }
   }, [currentTool]);
 
+  const handleFileSelect = useCallback(async (file: File) => {
+    try {
+      const { PrimitiveFactory } = await import('../../services/geometry/primitiveFactory');
+      const geometry = await PrimitiveFactory.createGeometryFromFile(file);
+      if (!geometry) {
+        console.error('Failed to create geometry from file');
+        return;
+      }
+
+      const newObject: SceneObjectData = {
+        id: `object_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        type: 'custom',
+        position: [0, 0, 0],
+        rotation: [0, 0, 0],
+        scale: [1, 1, 1],
+      };
+
+      setObjects(prev => [...prev, newObject]);
+      setObjectGeometries(prev => ({ ...prev, [newObject.id]: geometry }));
+      setSelectedObjectId(newObject.id);
+      setCurrentTool('select');
+
+      requestStateSave();
+      console.log('ModelingCanvas: handleFileSelect finished for file:', file.name);
+    } catch (error) {
+      console.error('Error importing file:', error);
+    }
+  }, [requestStateSave]);
+
   const orbitDisablingTools = getOrbitDisablingTools();
 
   return (
@@ -253,6 +282,7 @@ export function ModelingCanvas() {
             selectedObjectId={selectedObjectId}
             onToolChange={setCurrentTool}
             onPrimitiveSelect={setSelectedPrimitive}
+            onFileSelect={handleFileSelect}
           />
 
           <ObjectSidebar

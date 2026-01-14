@@ -163,10 +163,21 @@ export function useSceneUndo({
 
   // Save state when a new object is created and its geometry is initialized
   useEffect(() => {
-    if (needsSave.current && objects.length > 0) {
+    if (needsSave.current) {
+      if (objects.length === 0) {
+        // Handle case where all objects are deleted, then save
+        needsSave.current = false;
+        saveCurrentState();
+        return;
+      }
+
+      // Check if the number of objects has changed since the last save
+      const lastStateObjectCount = history.current[currentIndexRef.current]?.objects.length ?? -1;
+
       // Check if all objects have their geometry initialized
       const allGeometriesReady = objects.every(obj => objectGeometries[obj.id]);
-      if (allGeometriesReady) {
+
+      if (allGeometriesReady && objects.length !== lastStateObjectCount) {
         needsSave.current = false;
         saveCurrentState();
       }

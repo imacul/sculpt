@@ -15,8 +15,8 @@ interface PlacementData {
 
 interface PlacementHandlerProps {
   isActive: boolean;
-  selectedPrimitive: PrimitiveType;
-  onPlaceObject: (type: PrimitiveType, position: [number, number, number], scale: number, rotation: [number, number, number]) => void;
+  selectedPrimitive: PrimitiveType | null;
+  onPlaceObject: (type: PrimitiveType, position: [number, number, number], scale: number, rotation: [number, number, number], initialGeometry?: THREE.BufferGeometry) => void;
 }
 
 export function PlacementHandler({
@@ -197,7 +197,7 @@ export function PlacementHandler({
 
     const handlePointerEnd = () => {
       const currentPlacement = placementRef.current;
-      if (currentPlacement.isPlacing && isActive) {
+      if (currentPlacement.isPlacing && isActive && selectedPrimitive) {
         const { previewPosition, previewScale, previewRotation } = currentPlacement;
         if (previewScale > 0.3) {
           onPlaceObject(selectedPrimitive, previewPosition, previewScale, previewRotation);
