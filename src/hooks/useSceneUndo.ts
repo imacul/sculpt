@@ -21,27 +21,27 @@ interface SceneObjectData {
 
 interface GlobalState {
   objects: SceneObjectState[];
-  selectedObjectId: string | null;
+  selectedObjectIds: string[];
   timestamp: number;
 }
 
 interface UseSceneUndoParams {
   objects: SceneObjectData[];
   objectGeometries: Record<string, THREE.BufferGeometry>;
-  selectedObjectId: string | null;
+  selectedObjectIds: string[];
   setObjects: React.Dispatch<React.SetStateAction<SceneObjectData[]>>;
   setObjectGeometries: React.Dispatch<React.SetStateAction<Record<string, THREE.BufferGeometry>>>;
-  setSelectedObjectId: React.Dispatch<React.SetStateAction<string | null>>;
+  setSelectedObjectIds: React.Dispatch<React.SetStateAction<string[]>>;
   maxHistorySize?: number;
 }
 
 export function useSceneUndo({
   objects,
   objectGeometries,
-  selectedObjectId,
+  selectedObjectIds,
   setObjects,
   setObjectGeometries,
-  setSelectedObjectId,
+  setSelectedObjectIds,
   maxHistorySize = 50,
 }: UseSceneUndoParams) {
   const [, forceUpdate] = useState(0);
@@ -51,7 +51,7 @@ export function useSceneUndo({
   const hasInitialSave = useRef(false);
 
   // Core undo/redo functionality
-  const saveState = useCallback((objectStates: SceneObjectState[], selectedId: string | null) => {
+  const saveState = useCallback((objectStates: SceneObjectState[], selectedIds: string[]) => {
     // Clone all objects and their geometries
     const clonedObjects = objectStates.map(obj => ({
       ...obj,
@@ -66,7 +66,7 @@ export function useSceneUndo({
     // Add new state
     history.current.push({
       objects: clonedObjects,
-      selectedObjectId: selectedId,
+      selectedObjectIds: selectedIds,
       timestamp: Date.now()
     });
 
@@ -86,8 +86,8 @@ export function useSceneUndo({
       ...obj,
       geometry: objectGeometries[obj.id]
     }));
-    saveState(objectsWithGeometry, selectedObjectId);
-  }, [objects, objectGeometries, selectedObjectId, saveState]);
+    saveState(objectsWithGeometry, selectedObjectIds);
+  }, [objects, objectGeometries, selectedObjectIds, saveState]);
 
   // Mark that we need to save state (used after object creation)
   const requestStateSave = useCallback(() => {
@@ -119,9 +119,9 @@ export function useSceneUndo({
         }
       });
       setObjectGeometries(newGeometries);
-      setSelectedObjectId(state.selectedObjectId);
+      setSelectedObjectIds(state.selectedObjectIds || []);
     }
-  }, [setObjects, setObjectGeometries, setSelectedObjectId]);
+  }, [setObjects, setObjectGeometries, setSelectedObjectIds]);
 
   // Handle redo
   const handleRedo = useCallback(() => {
@@ -148,16 +148,16 @@ export function useSceneUndo({
         }
       });
       setObjectGeometries(newGeometries);
-      setSelectedObjectId(state.selectedObjectId);
+      setSelectedObjectIds(state.selectedObjectIds || []);
     }
-  }, [setObjects, setObjectGeometries, setSelectedObjectId]);
+  }, [setObjects, setObjectGeometries, setSelectedObjectIds]);
 
   // Save initial state on mount
   useEffect(() => {
     if (!hasInitialSave.current && objects.length === 0) {
       hasInitialSave.current = true;
       // Save an empty initial state
-      saveState([], null);
+      saveState([], []);
     }
   }, [saveState, objects.length]);
 

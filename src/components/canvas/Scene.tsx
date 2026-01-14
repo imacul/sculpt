@@ -18,7 +18,7 @@ interface SceneObjectData {
 interface SceneProps {
   objects: SceneObjectData[];
   objectGeometries: Record<string, THREE.BufferGeometry>;
-  selectedObjectId: string | null;
+  selectedObjectIds: string[];
   currentTool: ToolType;
   selectedPrimitive: PrimitiveType;
   brushSize: number;
@@ -41,7 +41,7 @@ function AxesHelper() {
 export function Scene({
   objects,
   objectGeometries,
-  selectedObjectId,
+  selectedObjectIds,
   currentTool,
   selectedPrimitive,
   brushSize,
@@ -81,7 +81,7 @@ export function Scene({
       <AxesHelper />
 
       {(() => {
-        const selectedObject = objects.find(obj => obj.id === selectedObjectId);
+        const selectedObject = objects.find(obj => obj.id === selectedObjectIds[0]);
         return (
           <SymmetryPlanes
             symmetryAxes={symmetryAxes}
@@ -101,16 +101,16 @@ export function Scene({
           rotation={obj.rotation}
           scale={obj.scale}
           initialGeometry={objectGeometries[obj.id]}
-          isSelected={obj.id === selectedObjectId}
+          isSelected={selectedObjectIds.includes(obj.id)}
           currentTool={currentTool}
           brushSize={brushSize}
           brushStrength={brushStrength}
           symmetryAxes={symmetryAxes}
-          selectedRenderMode={obj.id === selectedObjectId ? selectedRenderMode : 'shaded'}
+          selectedRenderMode={selectedObjectIds.includes(obj.id) ? selectedRenderMode : 'shaded'}
           onSelect={onSelectObject}
           onPositionChange={onPositionChange}
           onScaleChange={onScaleChange}
-          meshRef={obj.id === selectedObjectId ? selectedMeshRef : undefined}
+          meshRef={selectedObjectIds.length === 1 && obj.id === selectedObjectIds[0] ? selectedMeshRef : undefined}
           onVertexCountUpdate={onVertexCountUpdate}
           onGeometryUpdate={onGeometryUpdate}
           onRequestStateSave={onRequestStateSave}
@@ -119,7 +119,7 @@ export function Scene({
 
       <BrushPreview
         brushSize={brushSize}
-        isVisible={isSculptingTool && selectedObjectId !== null}
+        isVisible={isSculptingTool && selectedObjectIds.length === 1}
         currentTool={currentTool}
         targetMesh={selectedMeshRef.current}
       />

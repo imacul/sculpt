@@ -84,6 +84,15 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     helpText: 'Hold left-click and drag to push • Hold Shift to pull',
     brushColor: '#e2a44a',
   },
+  {
+    id: 'join',
+    icon: '∪',
+    label: 'Join',
+    requiresObject: true,
+    isSculptingTool: false,
+    disablesOrbitControl: false,
+    helpText: 'Select two objects to join them',
+  },
 ];
 
 export const PRIMITIVE_DEFINITIONS: PrimitiveDefinition[] = [

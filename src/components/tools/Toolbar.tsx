@@ -4,7 +4,7 @@ import { TOOL_DEFINITIONS, PRIMITIVE_DEFINITIONS } from '../../services/tools/to
 interface ToolbarProps {
   currentTool: ToolType;
   selectedPrimitive: PrimitiveType;
-  selectedObjectId: string | null;
+  selectedObjectIds: string[];
   onToolChange: (tool: ToolType) => void;
   onPrimitiveSelect: (primitive: PrimitiveType) => void;
   onFileSelect: (file: File) => void;
@@ -13,12 +13,12 @@ interface ToolbarProps {
 export function Toolbar({
   currentTool,
   selectedPrimitive,
-  selectedObjectId,
+  selectedObjectIds,
   onToolChange,
   onPrimitiveSelect,
   onFileSelect,
 }: ToolbarProps) {
-  const hasSelectedObject = selectedObjectId !== null;
+  const selectionCount = selectedObjectIds.length;
 
   return (
     <div style={{
@@ -41,7 +41,19 @@ export function Toolbar({
         boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
       }}>
         {TOOL_DEFINITIONS.map((tool) => {
-          const isDisabled = tool.requiresObject && !hasSelectedObject;
+          let isDisabled = false;
+          let title = tool.label;
+
+          if (tool.requiresObject) {
+            if (tool.id === 'join') {
+              isDisabled = selectionCount !== 2;
+              title = isDisabled ? 'Select exactly two objects to join' : tool.label;
+            } else {
+              isDisabled = selectionCount === 0;
+              title = isDisabled ? `${tool.label} (Select an object first)` : tool.label;
+            }
+          }
+
           return (
             <button
               key={tool.id}
@@ -64,7 +76,7 @@ export function Toolbar({
                 fontSize: '20px',
                 opacity: isDisabled ? 0.5 : 1,
               }}
-              title={isDisabled ? `${tool.label} (Select an object first)` : tool.label}
+              title={title}
             >
               <span>{tool.icon}</span>
               <span style={{ fontSize: '9px', marginTop: '2px' }}>{tool.label}</span>

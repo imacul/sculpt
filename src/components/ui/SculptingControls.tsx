@@ -5,7 +5,7 @@ interface SculptingControlsProps {
   currentTool: ToolType;
   brushSize: number;
   brushStrength: number;
-  selectedObjectId: string | null;
+  selectedObjectIds: string[];
   symmetryAxes: { x: boolean; y: boolean; z: boolean };
   onBrushSizeChange: (size: number) => void;
   onBrushStrengthChange: (strength: number) => void;
@@ -16,13 +16,14 @@ export function SculptingControls({
   currentTool,
   brushSize,
   brushStrength,
-  selectedObjectId,
+  selectedObjectIds,
   symmetryAxes,
   onBrushSizeChange,
   onBrushStrengthChange,
   onSymmetryChange,
 }: SculptingControlsProps) {
   const toolDef = getToolDefinition(currentTool);
+  const selectionCount = selectedObjectIds.length;
 
   if (!toolDef.isSculptingTool) {
     return null;
@@ -44,7 +45,7 @@ export function SculptingControls({
         {toolDef.label} Tool Controls
       </h3>
 
-      {!selectedObjectId && (
+      {selectionCount === 0 && (
         <div style={{
           backgroundColor: 'rgba(255,165,0,0.2)',
           border: '1px solid orange',
@@ -57,7 +58,20 @@ export function SculptingControls({
         </div>
       )}
 
-      {selectedObjectId && (
+      {selectionCount > 1 && (
+        <div style={{
+          backgroundColor: 'rgba(74,144,226,0.2)',
+          border: '1px solid #4a90e2',
+          padding: '10px',
+          borderRadius: '4px',
+          marginBottom: '15px',
+          fontSize: '12px'
+        }}>
+          ℹ️ Sculpting is only available for a single object.
+        </div>
+      )}
+
+      {selectionCount === 1 && (
         <>
           <div style={{ marginBottom: '12px' }}>
             <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
