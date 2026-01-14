@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { useThree, useFrame } from '@react-three/fiber';
+import { useThree, useFrame, ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { PrimitiveType, ToolType } from '../../types';
 import { PrimitiveFactory } from '../../services/geometry/primitiveFactory';
@@ -19,7 +19,7 @@ interface SceneObjectProps {
   brushStrength: number;
   symmetryAxes: { x: boolean; y: boolean; z: boolean };
   selectedRenderMode?: 'shaded' | 'mesh';
-  onSelect: (id: string, event: React.MouseEvent) => void;
+  onSelect: (id: string, event: ThreeEvent<MouseEvent>) => void;
   onPositionChange?: (id: string, position: [number, number, number]) => void;
   onScaleChange?: (id: string, scale: [number, number, number]) => void;
   meshRef?: React.MutableRefObject<THREE.Mesh | null>;

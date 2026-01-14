@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import * as THREE from 'three';
 import { Grid } from '@react-three/drei';
+import { ThreeEvent } from '@react-three/fiber';
 import { SceneObject } from '../objects/SceneObject';
 import { BrushPreview } from '../tools/BrushPreview';
 import { PlacementHandler } from '../objects/PlacementHandler';
@@ -25,7 +26,7 @@ interface SceneProps {
   brushStrength: number;
   symmetryAxes: { x: boolean; y: boolean; z: boolean };
   selectedRenderMode: 'shaded' | 'mesh';
-  onSelectObject: (id: string | null, event?: React.MouseEvent) => void;
+  onSelectObject: (id: string | null, event: ThreeEvent<MouseEvent>) => void;
   onPlaceObject: (type: PrimitiveType, position: [number, number, number], scale: number, rotation: [number, number, number]) => void;
   onPositionChange: (id: string, position: [number, number, number]) => void;
   onScaleChange: (id: string, scale: [number, number, number]) => void;
@@ -107,7 +108,7 @@ export function Scene({
           brushStrength={brushStrength}
           symmetryAxes={symmetryAxes}
           selectedRenderMode={selectedObjectIds.includes(obj.id) ? selectedRenderMode : 'shaded'}
-          onSelect={(id, event) => onSelectObject(id, event as any)}
+          onSelect={onSelectObject}
           onPositionChange={onPositionChange}
           onScaleChange={onScaleChange}
           meshRef={selectedObjectIds.length === 1 && obj.id === selectedObjectIds[0] ? selectedMeshRef : undefined}

@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, ThreeEvent } from '@react-three/fiber';
 import { OrbitControls, GizmoHelper, GizmoViewport } from '@react-three/drei';
 import * as THREE from 'three';
 import { Scene } from './Scene';
@@ -113,10 +113,10 @@ export function ModelingCanvas() {
     requestStateSave();
   }, [requestStateSave]);
 
-  const handleSelectObject = useCallback((id: string | null, event?: React.MouseEvent) => {
+  const handleSelectObject = useCallback((id: string | null, event: ThreeEvent<MouseEvent>) => {
     if (!id) return;
 
-    const isMultiSelect = event?.shiftKey || event?.ctrlKey || event?.metaKey;
+    const isMultiSelect = event.nativeEvent.shiftKey || event.nativeEvent.ctrlKey || event.nativeEvent.metaKey;
 
     if (currentTool === 'select') {
       setSelectedObjectIds(prev => {
