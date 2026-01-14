@@ -168,8 +168,8 @@ export function ModelingCanvas() {
         id: `object_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         type: 'custom',
         position: [0, 0, 0],
-        rotation: [0, 0, 0],
-        scale: [1, 1, 1],
+        rotation: [-Math.PI / 2, 0, 0],
+        scale: [3, 3, 3],
       };
 
       setObjects(prev => [...prev, newObject]);
