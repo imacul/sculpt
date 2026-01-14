@@ -19,7 +19,7 @@ interface SceneObjectProps {
   brushStrength: number;
   symmetryAxes: { x: boolean; y: boolean; z: boolean };
   selectedRenderMode?: 'shaded' | 'mesh';
-  onSelect: (id: string) => void;
+  onSelect: (id: string, event: React.MouseEvent) => void;
   onPositionChange?: (id: string, position: [number, number, number]) => void;
   onScaleChange?: (id: string, scale: [number, number, number]) => void;
   meshRef?: React.MutableRefObject<THREE.Mesh | null>;
@@ -274,12 +274,12 @@ export function SceneObject({
       e.stopPropagation();
 
       if (currentTool === 'select') {
-        onSelect(id);
+        onSelect(id, e);
       } else if (currentTool === 'move' || currentTool === 'scale') {
-        onSelect(id);
+        onSelect(id, e);
         startDrag(e);
       } else if (!isSculptMode) {
-        onSelect(id);
+        onSelect(id, e);
       }
     }
   }, [currentTool, isSculptMode, id, onSelect, startDrag]);

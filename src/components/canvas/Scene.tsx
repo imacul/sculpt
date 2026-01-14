@@ -25,7 +25,7 @@ interface SceneProps {
   brushStrength: number;
   symmetryAxes: { x: boolean; y: boolean; z: boolean };
   selectedRenderMode: 'shaded' | 'mesh';
-  onSelectObject: (id: string | null) => void;
+  onSelectObject: (id: string | null, event?: React.MouseEvent) => void;
   onPlaceObject: (type: PrimitiveType, position: [number, number, number], scale: number, rotation: [number, number, number]) => void;
   onPositionChange: (id: string, position: [number, number, number]) => void;
   onScaleChange: (id: string, scale: [number, number, number]) => void;
@@ -107,7 +107,7 @@ export function Scene({
           brushStrength={brushStrength}
           symmetryAxes={symmetryAxes}
           selectedRenderMode={selectedObjectIds.includes(obj.id) ? selectedRenderMode : 'shaded'}
-          onSelect={onSelectObject}
+          onSelect={(id, event) => onSelectObject(id, event as any)}
           onPositionChange={onPositionChange}
           onScaleChange={onScaleChange}
           meshRef={selectedObjectIds.length === 1 && obj.id === selectedObjectIds[0] ? selectedMeshRef : undefined}
