@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Brush, Evaluator, ADDITION } from 'three-bvh-csg';
 import { MeshBVH } from 'three-mesh-bvh';
+import { ensureUVs } from './uvGenerator';
 
 // It's recommended to add a 'boundsTree' to complex geometries for performance.
 // This function ensures the geometry has a BVH.
@@ -25,8 +26,10 @@ export class BooleanOperations {
       return null;
     }
 
-    // Ensure both geometries have BVH for performance
+    // Ensure both geometries have UVs and BVH for CSG and performance
+    ensureUVs(geometry1);
     ensureBVH(geometry1);
+    ensureUVs(geometry2);
     ensureBVH(geometry2);
 
     // Create brushes from the geometries

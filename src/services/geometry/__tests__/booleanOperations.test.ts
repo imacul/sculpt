@@ -25,5 +25,28 @@ describe('BooleanOperations', () => {
 
       expect(result).toBeNull();
     });
+
+    it('should not crash if geometries are missing UVs', () => {
+      // 1. Create geometries that are known to not have UVs
+      const geometry1 = new THREE.BoxGeometry(1, 1, 1);
+      const geometry2 = new THREE.BoxGeometry(1, 1, 1);
+      geometry2.translate(0.5, 0.5, 0.5);
+
+      // 2. Explicitly remove the UV attribute to simulate an imported model
+      geometry1.deleteAttribute('uv');
+      geometry2.deleteAttribute('uv');
+
+      // 3. Perform the join operation
+      const result = BooleanOperations.join(geometry1, geometry2);
+
+      // 4. Assert that the operation completed successfully and returned a valid geometry
+      expect(result).not.toBeNull();
+      // Use a looser check for BufferGeometry to avoid instanceof issues in test environments
+      expect(result).toHaveProperty('attributes');
+      expect(result).toHaveProperty('drawRange');
+
+      // 5. Assert that the resulting geometry now has UVs
+      expect(result?.attributes.uv).toBeDefined();
+    });
   });
 });
