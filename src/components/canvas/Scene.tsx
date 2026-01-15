@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import * as THREE from 'three';
 import { Grid } from '@react-three/drei';
-import { ThreeEvent } from '@react-three/fiber';
+import type { ThreeEvent } from '@react-three/fiber';
 import { SceneObject } from '../objects/SceneObject';
 import { BrushPreview } from '../tools/BrushPreview';
 import { PlacementHandler } from '../objects/PlacementHandler';
