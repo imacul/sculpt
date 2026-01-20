@@ -74,6 +74,12 @@ export function Scene({
     return geometry;
   }, [measurePoints]);
 
+  const measureLine = useMemo(() => {
+    if (!measureLineGeometry) return null;
+    const material = new THREE.LineBasicMaterial({ color: '#4a90e2' });
+    return new THREE.Line(measureLineGeometry, material);
+  }, [measureLineGeometry]);
+
   return (
     <>
       <ambientLight intensity={0.5} />
@@ -148,11 +154,7 @@ export function Scene({
           <meshStandardMaterial color="#4a90e2" />
         </mesh>
       )}
-      {measureLineGeometry && (
-        <line geometry={measureLineGeometry}>
-          <lineBasicMaterial color="#4a90e2" linewidth={2} />
-        </line>
-      )}
+      {measureLine && <primitive object={measureLine} />}
 
       <BrushPreview
         brushSize={brushSize}
