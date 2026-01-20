@@ -244,13 +244,7 @@ function applyDeformation(
         }
 
         const baseStrength = tool === "extrude" ? 0.04 : tool === "offset" ? 0.03 : 0.02;
-        const depthStrength = depthOverride ?? (brushStrength * baseStrength);
-        const falloffStrength = tool === "offset"
-          ? falloff
-          : tool === "extrude"
-            ? falloff
-            : falloff * falloff;
-        const strength = depthStrength * falloffStrength;
+        const strength = brushStrength * falloff * falloff * baseStrength;
 
         let multiplier = strength;
 
@@ -260,7 +254,7 @@ function applyDeformation(
             : 0;
           multiplier = strength * Math.min(moveDistance * 250, 50.0);
           if (invert) multiplier = -multiplier;
-        } else if (tool === "offset" || tool === "extrude") {
+        } else if (tool === "offset") {
           if (invert) multiplier = -multiplier;
         } else {
           if (tool === "subtract") {

@@ -80,7 +80,6 @@ export function MobileUI({
   const primitives: PrimitiveType[] = ['sphere', 'cube', 'cylinder', 'cone', 'torus'];
 
   const isSculptTool = ['add', 'subtract', 'push', 'offset', 'extrude'].includes(currentTool);
-  const isDepthTool = currentTool === 'offset' || currentTool === 'extrude';
 
   // Close primitive selector when tool changes away from add-primitive
   useEffect(() => {

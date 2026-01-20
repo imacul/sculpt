@@ -75,8 +75,8 @@ npm run dev
   - **Add**: Click and drag to add material
   - **Subtract**: Click and drag to remove material
   - **Push**: Click and drag to push/pull surfaces
-  - **Offset**: Click and drag to offset surface normals with clinician-defined depth (mm)
-  - **Extrude**: Click and drag to extrude or inset regions by depth (mm)
+  - **Offset**: Click and drag to offset surface normals
+  - **Extrude**: Click and drag to extrude or inset regions
 - **Transform Mode**:
   - **Move**: Click and drag to move objects
   - **Scale**: Click and drag to scale objects
