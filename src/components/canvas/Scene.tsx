@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { Grid } from '@react-three/drei';
 import { SceneObject } from '../objects/SceneObject';
@@ -23,6 +23,10 @@ interface SceneProps {
   selectedPrimitive: PrimitiveType;
   brushSize: number;
   brushStrength: number;
+  offsetDepthMm: number;
+  extrudeDepthMm: number;
+  unitScaleMm: number;
+  measurePoints: Array<THREE.Vector3 | null>;
   symmetryAxes: { x: boolean; y: boolean; z: boolean };
   selectedRenderMode: 'shaded' | 'mesh';
   onSelectObject: (id: string | null) => void;
@@ -32,6 +36,7 @@ interface SceneProps {
   onVertexCountUpdate: (objectId: string, count: number) => void;
   onGeometryUpdate: (objectId: string, geometry: THREE.BufferGeometry) => void;
   onRequestStateSave: () => void;
+  onMeasurePoint: (point: THREE.Vector3) => void;
 }
 
 function AxesHelper() {
@@ -46,6 +51,10 @@ export function Scene({
   selectedPrimitive,
   brushSize,
   brushStrength,
+  offsetDepthMm,
+  extrudeDepthMm,
+  unitScaleMm,
+  measurePoints,
   symmetryAxes,
   selectedRenderMode,
   onSelectObject,
@@ -55,9 +64,15 @@ export function Scene({
   onVertexCountUpdate,
   onGeometryUpdate,
   onRequestStateSave,
+  onMeasurePoint,
 }: SceneProps) {
   const selectedMeshRef = useRef<THREE.Mesh | null>(null);
-  const isSculptingTool = ['add', 'subtract', 'push'].includes(currentTool);
+  const isSculptingTool = ['add', 'subtract', 'push', 'offset', 'extrude'].includes(currentTool);
+  const measureLineGeometry = useMemo(() => {
+    if (!measurePoints[0] || !measurePoints[1]) return null;
+    const geometry = new THREE.BufferGeometry().setFromPoints([measurePoints[0], measurePoints[1]]);
+    return geometry;
+  }, [measurePoints]);
 
   return (
     <>
@@ -105,6 +120,9 @@ export function Scene({
           currentTool={currentTool}
           brushSize={brushSize}
           brushStrength={brushStrength}
+          offsetDepthMm={offsetDepthMm}
+          extrudeDepthMm={extrudeDepthMm}
+          unitScaleMm={unitScaleMm}
           symmetryAxes={symmetryAxes}
           selectedRenderMode={selectedObjectIds.includes(obj.id) ? selectedRenderMode : 'shaded'}
           onSelect={onSelectObject}
@@ -114,8 +132,27 @@ export function Scene({
           onVertexCountUpdate={onVertexCountUpdate}
           onGeometryUpdate={onGeometryUpdate}
           onRequestStateSave={onRequestStateSave}
+          onMeasurePoint={onMeasurePoint}
         />
       ))}
+
+      {measurePoints[0] && (
+        <mesh position={measurePoints[0]}>
+          <sphereGeometry args={[0.06, 16, 16]} />
+          <meshStandardMaterial color="#4a90e2" />
+        </mesh>
+      )}
+      {measurePoints[1] && (
+        <mesh position={measurePoints[1]}>
+          <sphereGeometry args={[0.06, 16, 16]} />
+          <meshStandardMaterial color="#4a90e2" />
+        </mesh>
+      )}
+      {measureLineGeometry && (
+        <line geometry={measureLineGeometry}>
+          <lineBasicMaterial color="#4a90e2" linewidth={2} />
+        </line>
+      )}
 
       <BrushPreview
         brushSize={brushSize}

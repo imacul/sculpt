@@ -1,13 +1,21 @@
 import type { ToolType, PrimitiveType } from '../../types';
+import type * as THREE from 'three';
 import { getToolDefinition } from '../../services/tools/toolDefinitions';
 
 interface StatusOverlayProps {
   currentTool: ToolType;
   selectedPrimitive: PrimitiveType;
+  measurePoints?: Array<THREE.Vector3 | null>;
+  unitScaleMm?: number;
 }
 
-export function StatusOverlay({ currentTool, selectedPrimitive }: StatusOverlayProps) {
+export function StatusOverlay({ currentTool, selectedPrimitive, measurePoints, unitScaleMm }: StatusOverlayProps) {
   const toolDef = getToolDefinition(currentTool);
+  const [measureStart, measureEnd] = measurePoints ?? [];
+  const effectiveUnitScale = unitScaleMm && unitScaleMm > 0 ? unitScaleMm : 1;
+  const distanceMm = measureStart && measureEnd
+    ? measureStart.distanceTo(measureEnd) * effectiveUnitScale
+    : null;
 
   return (
     <div style={{
@@ -29,8 +37,15 @@ export function StatusOverlay({ currentTool, selectedPrimitive }: StatusOverlayP
       <div style={{ marginTop: '5px' }}>
         {currentTool === 'select' && 'Click objects to select'}
         {currentTool === 'add-primitive' && `Click and drag to place ${selectedPrimitive}`}
+        {currentTool === 'measure' && 'Click two points to measure distance'}
         {toolDef.helpText && currentTool !== 'select' && currentTool !== 'add-primitive' && toolDef.helpText}
       </div>
+      {currentTool === 'measure' && (
+        <div style={{ marginTop: '8px' }}>
+          <strong>Distance:</strong>{' '}
+          {distanceMm === null ? 'Select two points' : `${distanceMm.toFixed(2)} mm`}
+        </div>
+      )}
 
       <div style={{
         marginTop: '10px',

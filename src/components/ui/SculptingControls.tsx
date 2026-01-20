@@ -5,10 +5,15 @@ interface SculptingControlsProps {
   currentTool: ToolType;
   brushSize: number;
   brushStrength: number;
+  offsetDepthMm: number;
+  extrudeDepthMm: number;
+  unitScaleMm: number;
   selectedObjectIds: string[];
   symmetryAxes: { x: boolean; y: boolean; z: boolean };
   onBrushSizeChange: (size: number) => void;
   onBrushStrengthChange: (strength: number) => void;
+  onOffsetDepthChange: (depth: number) => void;
+  onExtrudeDepthChange: (depth: number) => void;
   onSymmetryChange: (axis: 'x' | 'y' | 'z', enabled: boolean) => void;
 }
 
@@ -16,14 +21,21 @@ export function SculptingControls({
   currentTool,
   brushSize,
   brushStrength,
+  offsetDepthMm,
+  extrudeDepthMm,
+  unitScaleMm,
   selectedObjectIds,
   symmetryAxes,
   onBrushSizeChange,
   onBrushStrengthChange,
+  onOffsetDepthChange,
+  onExtrudeDepthChange,
   onSymmetryChange,
 }: SculptingControlsProps) {
   const toolDef = getToolDefinition(currentTool);
   const selectionCount = selectedObjectIds.length;
+  const isDepthTool = currentTool === 'offset' || currentTool === 'extrude';
+  const effectiveUnitScale = Number.isFinite(unitScaleMm) && unitScaleMm > 0 ? unitScaleMm : 1;
 
   if (!toolDef.isSculptingTool) {
     return null;
@@ -88,20 +100,55 @@ export function SculptingControls({
             </label>
           </div>
 
-          <div style={{ marginBottom: '12px' }}>
-            <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>Strength: {(brushStrength * 100).toFixed(0)}%</span>
-              <input
-                type="range"
-                min="0.1"
-                max="1"
-                step="0.1"
-                value={brushStrength}
-                onChange={(e) => onBrushStrengthChange(parseFloat(e.target.value))}
-                style={{ width: '150px', marginLeft: '10px' }}
-              />
-            </label>
-          </div>
+          {isDepthTool ? (
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>Depth: {(currentTool === 'offset' ? offsetDepthMm : extrudeDepthMm).toFixed(2)} mm</span>
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.1"
+                  value={currentTool === 'offset' ? offsetDepthMm : extrudeDepthMm}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value);
+                    if (currentTool === 'offset') {
+                      onOffsetDepthChange(Number.isFinite(value) && value > 0 ? value : 0.1);
+                    } else {
+                      onExtrudeDepthChange(Number.isFinite(value) && value > 0 ? value : 0.1);
+                    }
+                  }}
+                  style={{
+                    width: '120px',
+                    marginLeft: '10px',
+                    padding: '4px',
+                    backgroundColor: '#1a1a1a',
+                    border: '1px solid #333',
+                    color: 'white',
+                    borderRadius: '4px',
+                    fontSize: '11px',
+                  }}
+                />
+              </label>
+              <div style={{ fontSize: '10px', color: '#aaa', marginTop: '4px' }}>
+                Unit scale: {effectiveUnitScale.toFixed(2)} mm per unit
+              </div>
+            </div>
+          ) : (
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>Strength: {(brushStrength * 100).toFixed(0)}%</span>
+                <input
+                  type="range"
+                  min="0.1"
+                  max="1"
+                  step="0.1"
+                  value={brushStrength}
+                  onChange={(e) => onBrushStrengthChange(parseFloat(e.target.value))}
+                  style={{ width: '150px', marginLeft: '10px' }}
+                />
+              </label>
+            </div>
+          )}
 
           <div style={{ marginBottom: '12px' }}>
             <label style={{ display: 'block', marginBottom: '8px' }}>
@@ -156,7 +203,7 @@ export function SculptingControls({
           }}>
             <div>Shortcuts:</div>
             <div>[ / ] - Brush size</div>
-            <div>Shift+[ / Shift+] - Strength</div>
+            {!isDepthTool && <div>Shift+[ / Shift+] - Strength</div>}
             <div>X / Y / Z - Toggle symmetry</div>
           </div>
         </>
