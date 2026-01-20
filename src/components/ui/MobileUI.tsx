@@ -13,6 +13,10 @@ interface MobileUIProps {
   setBrushSize: (size: number) => void;
   brushStrength: number;
   setBrushStrength: (strength: number) => void;
+  offsetDepthMm: number;
+  setOffsetDepthMm: (depth: number) => void;
+  extrudeDepthMm: number;
+  setExtrudeDepthMm: (depth: number) => void;
   symmetryAxes: { x: boolean; y: boolean; z: boolean };
   setSymmetryAxes: (axes: { x: boolean; y: boolean; z: boolean }) => void;
 
@@ -38,6 +42,10 @@ export function MobileUI({
   setBrushSize,
   brushStrength,
   setBrushStrength,
+  offsetDepthMm,
+  setOffsetDepthMm,
+  extrudeDepthMm,
+  setExtrudeDepthMm,
   symmetryAxes,
   setSymmetryAxes,
   selectedRenderMode,
@@ -65,11 +73,15 @@ export function MobileUI({
     { type: 'add', icon: '+', label: 'Add' },
     { type: 'subtract', icon: '-', label: 'Subtract' },
     { type: 'push', icon: '→', label: 'Push' },
+    { type: 'offset', icon: '⇵', label: 'Offset' },
+    { type: 'extrude', icon: '⬆', label: 'Extrude' },
   ];
 
   const primitives: PrimitiveType[] = ['sphere', 'cube', 'cylinder', 'cone', 'torus'];
 
-  const isSculptTool = currentTool === 'add' || currentTool === 'subtract' || currentTool === 'push';
+  const isSculptTool = ['add', 'subtract', 'push', 'offset', 'extrude'].includes(currentTool);
+  const isDepthTool = currentTool === 'offset' || currentTool === 'extrude';
+  const depthValue = currentTool === 'offset' ? offsetDepthMm : extrudeDepthMm;
 
   // Close primitive selector when tool changes away from add-primitive
   useEffect(() => {
@@ -206,19 +218,42 @@ export function MobileUI({
             />
           </div>
 
-          <div className="mobile-control-group">
-            <label className="mobile-slider-label">
-              Strength: {Math.round(brushStrength * 100)}%
-            </label>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={brushStrength * 100}
-              onChange={(e) => setBrushStrength(parseInt(e.target.value) / 100)}
-              className="mobile-slider"
-            />
-          </div>
+          {isDepthTool ? (
+            <div className="mobile-control-group">
+              <label className="mobile-slider-label">
+                Depth (mm)
+              </label>
+              <input
+                type="number"
+                min="0.01"
+                step="0.1"
+                value={depthValue}
+                onChange={(e) => {
+                  const value = parseFloat(e.target.value);
+                  if (currentTool === 'offset') {
+                    setOffsetDepthMm(Number.isFinite(value) && value > 0 ? value : 0.1);
+                  } else {
+                    setExtrudeDepthMm(Number.isFinite(value) && value > 0 ? value : 0.1);
+                  }
+                }}
+                className="mobile-depth-input"
+              />
+            </div>
+          ) : (
+            <div className="mobile-control-group">
+              <label className="mobile-slider-label">
+                Strength: {Math.round(brushStrength * 100)}%
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={brushStrength * 100}
+                onChange={(e) => setBrushStrength(parseInt(e.target.value) / 100)}
+                className="mobile-slider"
+              />
+            </div>
+          )}
 
           <div className="mobile-control-group">
             <label className="mobile-slider-label">Symmetry:</label>
@@ -294,7 +329,10 @@ export function MobileUI({
           <div className="mobile-info">
             <p>Tool: {currentTool}</p>
             {currentTool === 'add-primitive' && <p>Shape: {selectedPrimitive}</p>}
-            {isSculptTool && <p>Strength: {Math.round(brushStrength * 100)}%</p>}
+            {isSculptTool && !isDepthTool && <p>Strength: {Math.round(brushStrength * 100)}%</p>}
+            {isDepthTool && (
+              <p>Depth: {depthValue.toFixed(2)} mm</p>
+            )}
           </div>
         </div>
       )}
@@ -494,6 +532,16 @@ export function MobileUI({
           background: white;
           border-radius: 50%;
           cursor: pointer;
+        }
+
+        .mobile-depth-input {
+          width: 100%;
+          padding: 6px 8px;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          color: white;
+          border-radius: 4px;
+          font-size: 14px;
         }
 
         .mobile-symmetry-buttons {

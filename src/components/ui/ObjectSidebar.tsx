@@ -1,4 +1,6 @@
 import type { PrimitiveType } from '../../types';
+import type * as THREE from 'three';
+import { computeGeometryVolume, getGeometryBoundsSize } from '../../utils/geometryMeasurements';
 
 interface SceneObjectData {
   id: string;
@@ -13,12 +15,16 @@ interface ObjectSidebarProps {
   objects: SceneObjectData[];
   selectedRenderMode: 'shaded' | 'mesh';
   objectVertexCounts: Record<string, number>;
+  objectGeometries: Record<string, THREE.BufferGeometry>;
+  unitScaleMm: number;
   onDeselectObject: () => void;
   onDeleteObject: (id: string) => void;
+  onJoinSelected: () => void;
   onRenderModeChange: (mode: 'shaded' | 'mesh') => void;
   onObjectPositionChange: (id: string, position: [number, number, number]) => void;
   onObjectRotationChange: (id: string, rotation: [number, number, number]) => void;
   onObjectScaleChange: (id: string, scale: [number, number, number]) => void;
+  onUnitScaleChange: (scale: number) => void;
 }
 
 export function ObjectSidebar({
@@ -26,21 +32,36 @@ export function ObjectSidebar({
   objects,
   selectedRenderMode,
   objectVertexCounts,
+  objectGeometries,
+  unitScaleMm,
   onDeselectObject,
   onDeleteObject,
+  onJoinSelected,
   onRenderModeChange,
   onObjectPositionChange,
   onObjectRotationChange,
   onObjectScaleChange,
+  onUnitScaleChange,
 }: ObjectSidebarProps) {
   const selectionCount = selectedObjectIds.length;
   const selectedObject = objects.find(obj => obj.id === selectedObjectIds[0]);
+  const selectedGeometry = selectedObject ? objectGeometries[selectedObject.id] : undefined;
 
   if (selectionCount === 0) {
     return null;
   }
 
   const totalVertexCount = selectedObjectIds.reduce((acc, id) => acc + (objectVertexCounts[id] || 0), 0);
+  const totalVolume = selectedObjectIds.reduce((acc, id) => {
+    const geometry = objectGeometries[id];
+    if (!geometry) return acc;
+    const volume = Math.abs(computeGeometryVolume(geometry));
+    return acc + volume;
+  }, 0);
+
+  const effectiveUnitScale = Number.isFinite(unitScaleMm) && unitScaleMm > 0 ? unitScaleMm : 1;
+  const selectedVolume = selectedGeometry ? Math.abs(computeGeometryVolume(selectedGeometry)) : null;
+  const selectedBounds = selectedGeometry ? getGeometryBoundsSize(selectedGeometry) : null;
 
   return (
     <div style={{
@@ -142,6 +163,58 @@ export function ObjectSidebar({
         </div>
       </div>
 
+      {/* Clinical Measurements */}
+      <div style={{ marginBottom: '15px' }}>
+        <strong>Clinical Measurements</strong>
+        <div style={{ marginTop: '8px' }}>
+          <label style={{ display: 'block', fontSize: '10px', color: '#aaa', marginBottom: '4px' }}>
+            Unit Scale (mm per unit)
+          </label>
+          <input
+            type="number"
+            value={effectiveUnitScale}
+            min="0.01"
+            step="0.01"
+            onChange={(e) => {
+              const nextValue = parseFloat(e.target.value);
+              onUnitScaleChange(Number.isFinite(nextValue) && nextValue > 0 ? nextValue : 1);
+            }}
+            style={{
+              width: '100%',
+              padding: '4px',
+              backgroundColor: '#1a1a1a',
+              border: '1px solid #333',
+              color: 'white',
+              borderRadius: '4px',
+              fontSize: '11px',
+              marginBottom: '8px',
+            }}
+          />
+        </div>
+        {selectionCount > 1 ? (
+          <div style={{ fontSize: '11px' }}>
+            <div><strong>Total Volume:</strong> {(totalVolume * Math.pow(effectiveUnitScale, 3)).toFixed(2)} mm³</div>
+          </div>
+        ) : selectedObject ? (
+          <div style={{ fontSize: '11px', display: 'grid', gap: '6px' }}>
+            <div>
+              <strong>Volume:</strong>{' '}
+              {selectedVolume === null ? 'N/A' : `${(selectedVolume * Math.pow(effectiveUnitScale, 3)).toFixed(2)} mm³`}
+            </div>
+            <div>
+              <strong>Dimensions:</strong>{' '}
+              {selectedBounds
+                ? `${(selectedBounds.x * selectedObject.scale[0] * effectiveUnitScale).toFixed(2)} × ${(selectedBounds.y * selectedObject.scale[1] * effectiveUnitScale).toFixed(2)} × ${(selectedBounds.z * selectedObject.scale[2] * effectiveUnitScale).toFixed(2)} mm`
+                : 'N/A'}
+            </div>
+            <div>
+              <strong>Angles:</strong>{' '}
+              {`${(selectedObject.rotation[0] * 180 / Math.PI).toFixed(1)}°, ${(selectedObject.rotation[1] * 180 / Math.PI).toFixed(1)}°, ${(selectedObject.rotation[2] * 180 / Math.PI).toFixed(1)}°`}
+            </div>
+          </div>
+        ) : null}
+      </div>
+
       {/* Transform Controls (only for single selection) */}
       {selectionCount === 1 && selectedObject && (
         <>
@@ -230,6 +303,26 @@ export function ObjectSidebar({
 
       {/* Actions */}
       <div>
+        {selectionCount === 2 && (
+          <button
+            onClick={onJoinSelected}
+            style={{
+              width: '100%',
+              padding: '8px',
+              backgroundColor: '#455a64',
+              border: 'none',
+              borderRadius: '4px',
+              color: 'white',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s',
+              marginBottom: '8px',
+            }}
+            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#546e7a'}
+            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#455a64'}
+          >
+            Boolean Join
+          </button>
+        )}
         <button
           onClick={() => selectedObjectIds.forEach(id => onDeleteObject(id))}
           style={{
