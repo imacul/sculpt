@@ -186,6 +186,8 @@ function applyDeformation(
 ): boolean {
   const positions = geometry.getAttribute("position");
   const positionsArray = positions.array as Float32Array;
+  const normals = geometry.getAttribute("normal");
+  const normalsArray = normals ? (normals.array as Float32Array) : null;
 
   // Calculate average normal once (based on original click point)
   const avgNormal = calculateAverageNormal(geometry, clickPoint, brushSize);
@@ -207,14 +209,16 @@ function applyDeformation(
         };
 
     // Calculate direction for this symmetry point
-    const direction = calculateDirection(
-      tool,
-      avgNormal,
-      clickPoint,
-      previousPoint,
-      mirrorConfig
-    );
-    if (!direction) continue;
+    const direction = tool === "offset"
+      ? null
+      : calculateDirection(
+          tool,
+          avgNormal,
+          clickPoint,
+          previousPoint,
+          mirrorConfig
+        );
+    if (tool !== "offset" && !direction) continue;
 
     // Apply deformation to vertices near this symmetry point
     for (let i = 0; i < positions.count; i++) {
@@ -227,8 +231,18 @@ function applyDeformation(
       const distance = vertex.distanceTo(symPoint);
 
       if (distance < brushSize) {
-        const falloff = 1 - distance / brushSize;
-        const strength = brushStrength * falloff * falloff * 0.02;
+        const normalizedDistance = distance / brushSize;
+        let falloff = 1 - normalizedDistance;
+
+        if (tool === "extrude") {
+          const core = 0.6;
+          falloff = normalizedDistance <= core
+            ? 1
+            : Math.max(0, 1 - (normalizedDistance - core) / (1 - core));
+        }
+
+        const baseStrength = tool === "extrude" ? 0.04 : tool === "offset" ? 0.03 : 0.02;
+        const strength = brushStrength * falloff * falloff * baseStrength;
 
         let multiplier = strength;
 
@@ -237,6 +251,8 @@ function applyDeformation(
             ? clickPoint.distanceTo(previousPoint)
             : 0;
           multiplier = strength * Math.min(moveDistance * 250, 50.0);
+          if (invert) multiplier = -multiplier;
+        } else if (tool === "offset") {
           if (invert) multiplier = -multiplier;
         } else {
           if (tool === "subtract") {
@@ -247,7 +263,17 @@ function applyDeformation(
           }
         }
 
-        vertex.add(direction.clone().multiplyScalar(multiplier));
+        const moveDirection = tool === "offset" && normalsArray
+          ? new THREE.Vector3(
+              normalsArray[i * 3],
+              normalsArray[i * 3 + 1],
+              normalsArray[i * 3 + 2]
+            )
+          : direction;
+
+        if (!moveDirection) continue;
+
+        vertex.add(moveDirection.clone().multiplyScalar(multiplier));
 
         positionsArray[i * 3] = vertex.x;
         positionsArray[i * 3 + 1] = vertex.y;
