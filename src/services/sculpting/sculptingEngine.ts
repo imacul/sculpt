@@ -196,6 +196,9 @@ function applyDeformation(
 
   let modified = false;
 
+  const isOffsetTool = tool === "offset";
+  const isExtrudeTool = tool === "extrude";
+
   // Apply deformation for each symmetry point
   for (let symIdx = 0; symIdx < symmetryPoints.length; symIdx++) {
     const symPoint = symmetryPoints[symIdx];
@@ -211,7 +214,7 @@ function applyDeformation(
         };
 
     // Calculate direction for this symmetry point
-    const direction = tool === "offset"
+    const direction = isOffsetTool
       ? null
       : calculateDirection(
           tool,
@@ -220,7 +223,7 @@ function applyDeformation(
           previousPoint,
           mirrorConfig
         );
-    if (tool !== "offset" && !direction) continue;
+    if (!isOffsetTool && !direction) continue;
 
     // Apply deformation to vertices near this symmetry point
     for (let i = 0; i < positions.count; i++) {
@@ -236,46 +239,47 @@ function applyDeformation(
         const normalizedDistance = distance / brushSize;
         let falloff = 1 - normalizedDistance;
 
-        if (tool === "extrude") {
+        if (isExtrudeTool) {
           const core = 0.6;
           falloff = normalizedDistance <= core
             ? 1
             : Math.max(0, 1 - (normalizedDistance - core) / (1 - core));
         }
 
-        const baseStrength = tool === "extrude" ? 0.04 : tool === "offset" ? 0.03 : 0.02;
+        const baseStrength = isExtrudeTool ? 0.04 : isOffsetTool ? 0.03 : 0.02;
         const depthStrength = depthOverride === undefined
           ? brushStrength * baseStrength
           : depthOverride;
-        const falloffStrength = tool === "offset"
+        const falloffStrength = isOffsetTool
           ? falloff
-          : tool === "extrude"
+          : isExtrudeTool
             ? falloff
             : falloff * falloff;
-        const strength = depthStrength * falloffStrength;
-        const strength = brushStrength * falloff * falloff * baseStrength;
+        const deformationStrength = depthStrength * falloffStrength;
 
-        let multiplier = strength;
+        let multiplier = deformationStrength;
 
         if (tool === "push") {
           const moveDistance = previousPoint
             ? clickPoint.distanceTo(previousPoint)
             : 0;
-          multiplier = strength * Math.min(moveDistance * 250, 50.0);
+          multiplier = deformationStrength * Math.min(moveDistance * 250, 50.0);
+          if (invert) multiplier = -multiplier;
+        } else if (isOffsetTool || isExtrudeTool) {
           if (invert) multiplier = -multiplier;
         } else if (tool === "offset" || tool === "extrude") {
         } else if (tool === "offset") {
           if (invert) multiplier = -multiplier;
         } else {
           if (tool === "subtract") {
-            multiplier = -strength;
+            multiplier = -deformationStrength;
           }
           if (invert) {
             multiplier = -multiplier;
           }
         }
 
-        const moveDirection = tool === "offset" && normalsArray
+        const moveDirection = isOffsetTool && normalsArray
           ? new THREE.Vector3(
               normalsArray[i * 3],
               normalsArray[i * 3 + 1],
