@@ -23,6 +23,9 @@ interface SceneProps {
   selectedPrimitive: PrimitiveType;
   brushSize: number;
   brushStrength: number;
+  offsetDepthMm: number;
+  extrudeDepthMm: number;
+  unitScaleMm: number;
   symmetryAxes: { x: boolean; y: boolean; z: boolean };
   selectedRenderMode: 'shaded' | 'mesh';
   onSelectObject: (id: string | null) => void;
@@ -46,6 +49,9 @@ export function Scene({
   selectedPrimitive,
   brushSize,
   brushStrength,
+  offsetDepthMm,
+  extrudeDepthMm,
+  unitScaleMm,
   symmetryAxes,
   selectedRenderMode,
   onSelectObject,
@@ -57,7 +63,7 @@ export function Scene({
   onRequestStateSave,
 }: SceneProps) {
   const selectedMeshRef = useRef<THREE.Mesh | null>(null);
-  const isSculptingTool = ['add', 'subtract', 'push'].includes(currentTool);
+  const isSculptingTool = ['add', 'subtract', 'push', 'offset', 'extrude'].includes(currentTool);
 
   return (
     <>
@@ -105,6 +111,9 @@ export function Scene({
           currentTool={currentTool}
           brushSize={brushSize}
           brushStrength={brushStrength}
+          offsetDepthMm={offsetDepthMm}
+          extrudeDepthMm={extrudeDepthMm}
+          unitScaleMm={unitScaleMm}
           symmetryAxes={symmetryAxes}
           selectedRenderMode={selectedObjectIds.includes(obj.id) ? selectedRenderMode : 'shaded'}
           onSelect={onSelectObject}

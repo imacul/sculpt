@@ -15,6 +15,7 @@ export interface SculptingStrokeParams {
   pushToolPreviousPoint?: THREE.Vector3 | null; // in local space, for push tool
   invert?: boolean; // for shift key
   shouldSubdivide?: boolean;
+  depth?: number; // for clinician-controlled offsets/extrudes (in local units)
   cloneGeometry?: boolean; // if true, clones geometry before modifying (for tests)
   ensureSymmetry?: boolean; // if true, runs expensive symmetry check (for tests only)
 }
@@ -180,17 +181,23 @@ function applyDeformation(
   tool: ToolType,
   brushSize: number,
   brushStrength: number,
+  depthOverride: number | undefined,
   clickPoint: THREE.Vector3,
   previousPoint: THREE.Vector3 | null,
   invert: boolean
 ): boolean {
   const positions = geometry.getAttribute("position");
   const positionsArray = positions.array as Float32Array;
+  const normals = geometry.getAttribute("normal");
+  const normalsArray = normals ? (normals.array as Float32Array) : null;
 
   // Calculate average normal once (based on original click point)
   const avgNormal = calculateAverageNormal(geometry, clickPoint, brushSize);
 
   let modified = false;
+
+  const isOffsetTool = tool === "offset";
+  const isExtrudeTool = tool === "extrude";
 
   // Apply deformation for each symmetry point
   for (let symIdx = 0; symIdx < symmetryPoints.length; symIdx++) {
@@ -207,14 +214,16 @@ function applyDeformation(
         };
 
     // Calculate direction for this symmetry point
-    const direction = calculateDirection(
-      tool,
-      avgNormal,
-      clickPoint,
-      previousPoint,
-      mirrorConfig
-    );
-    if (!direction) continue;
+    const direction = isOffsetTool
+      ? null
+      : calculateDirection(
+          tool,
+          avgNormal,
+          clickPoint,
+          previousPoint,
+          mirrorConfig
+        );
+    if (!isOffsetTool && !direction) continue;
 
     // Apply deformation to vertices near this symmetry point
     for (let i = 0; i < positions.count; i++) {
@@ -227,27 +236,57 @@ function applyDeformation(
       const distance = vertex.distanceTo(symPoint);
 
       if (distance < brushSize) {
-        const falloff = 1 - distance / brushSize;
-        const strength = brushStrength * falloff * falloff * 0.02;
+        const normalizedDistance = distance / brushSize;
+        let falloff = 1 - normalizedDistance;
 
-        let multiplier = strength;
+        if (isExtrudeTool) {
+          const core = 0.6;
+          falloff = normalizedDistance <= core
+            ? 1
+            : Math.max(0, 1 - (normalizedDistance - core) / (1 - core));
+        }
+
+        const baseStrength = isExtrudeTool ? 0.04 : isOffsetTool ? 0.03 : 0.02;
+        const depthStrength = depthOverride === undefined
+          ? brushStrength * baseStrength
+          : depthOverride;
+        const falloffStrength = isOffsetTool
+          ? falloff
+          : isExtrudeTool
+            ? falloff
+            : falloff * falloff;
+        const deformationStrength = depthStrength * falloffStrength;
+
+        let multiplier = deformationStrength;
 
         if (tool === "push") {
           const moveDistance = previousPoint
             ? clickPoint.distanceTo(previousPoint)
             : 0;
-          multiplier = strength * Math.min(moveDistance * 250, 50.0);
+          multiplier = deformationStrength * Math.min(moveDistance * 250, 50.0);
+          if (invert) multiplier = -multiplier;
+        } else if (isOffsetTool || isExtrudeTool) {
           if (invert) multiplier = -multiplier;
         } else {
           if (tool === "subtract") {
-            multiplier = -strength;
+            multiplier = -deformationStrength;
           }
           if (invert) {
             multiplier = -multiplier;
           }
         }
 
-        vertex.add(direction.clone().multiplyScalar(multiplier));
+        const moveDirection = isOffsetTool && normalsArray
+          ? new THREE.Vector3(
+              normalsArray[i * 3],
+              normalsArray[i * 3 + 1],
+              normalsArray[i * 3 + 2]
+            )
+          : direction;
+
+        if (!moveDirection) continue;
+
+        vertex.add(moveDirection.clone().multiplyScalar(multiplier));
 
         positionsArray[i * 3] = vertex.x;
         positionsArray[i * 3 + 1] = vertex.y;
@@ -320,6 +359,7 @@ export function applySculptingStroke(
     tool,
     params.brushSize,
     params.brushStrength,
+    params.depth,
     params.clickPoint,
     params.pushToolPreviousPoint || null,
     params.invert || false
