@@ -267,6 +267,9 @@ function applyDeformation(
           if (invert) multiplier = -multiplier;
         } else if (isOffsetTool || isExtrudeTool) {
           if (invert) multiplier = -multiplier;
+        } else if (tool === "offset" || tool === "extrude") {
+        } else if (tool === "offset") {
+          if (invert) multiplier = -multiplier;
         } else {
           if (tool === "subtract") {
             multiplier = -deformationStrength;
