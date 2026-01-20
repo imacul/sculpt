@@ -15,6 +15,7 @@ export interface SculptingStrokeParams {
   pushToolPreviousPoint?: THREE.Vector3 | null; // in local space, for push tool
   invert?: boolean; // for shift key
   shouldSubdivide?: boolean;
+  depth?: number; // for clinician-controlled offsets/extrudes (in local units)
   cloneGeometry?: boolean; // if true, clones geometry before modifying (for tests)
   ensureSymmetry?: boolean; // if true, runs expensive symmetry check (for tests only)
 }
@@ -180,6 +181,7 @@ function applyDeformation(
   tool: ToolType,
   brushSize: number,
   brushStrength: number,
+  depthOverride: number | undefined,
   clickPoint: THREE.Vector3,
   previousPoint: THREE.Vector3 | null,
   invert: boolean
@@ -346,6 +348,7 @@ export function applySculptingStroke(
     tool,
     params.brushSize,
     params.brushStrength,
+    params.depth,
     params.clickPoint,
     params.pushToolPreviousPoint || null,
     params.invert || false

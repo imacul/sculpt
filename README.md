@@ -16,6 +16,9 @@ https://github.com/user-attachments/assets/3f3c7f82-a05a-400a-be55-bfd3fc1ea78a
   - Symmetric subdivision for smooth surface refinement
   - Adaptive tessellation based on brush proximity
   - Real-time geometry updates with optimized performance
+- **Clinical Measurement Overlay**:
+  - Volume, dimensions, and orientation angles in clinician-friendly units
+  - Configurable unit scale (mm per scene unit)
 - **Professional Tools**:
   - Sculpting brushes (add, subtract, push)
   - Transform tools (move, scale, rotate)
