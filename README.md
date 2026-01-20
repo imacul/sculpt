@@ -10,7 +10,7 @@ https://github.com/user-attachments/assets/3f3c7f82-a05a-400a-be55-bfd3fc1ea78a
 
 ## Features
 
-- **Real-time 3D Sculpting**: Add, subtract, and push mesh surfaces with dynamic subdivision
+- **Real-time 3D Sculpting**: Add, subtract, push, offset, and extrude mesh surfaces with dynamic subdivision
 - **Multiple Primitive Shapes**: Start with spheres, cubes, cylinders, cones, and torus shapes
 - **Advanced Mesh Manipulation**:
   - Symmetric subdivision for smooth surface refinement
@@ -72,6 +72,8 @@ npm run dev
   - **Add**: Click and drag to add material
   - **Subtract**: Click and drag to remove material
   - **Push**: Click and drag to push/pull surfaces
+  - **Offset**: Click and drag to offset surface normals
+  - **Extrude**: Click and drag to extrude or inset regions
 - **Transform Mode**:
   - **Move**: Click and drag to move objects
   - **Scale**: Click and drag to scale objects

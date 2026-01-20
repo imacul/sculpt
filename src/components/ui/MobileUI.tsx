@@ -65,11 +65,13 @@ export function MobileUI({
     { type: 'add', icon: '+', label: 'Add' },
     { type: 'subtract', icon: '-', label: 'Subtract' },
     { type: 'push', icon: '→', label: 'Push' },
+    { type: 'offset', icon: '⇵', label: 'Offset' },
+    { type: 'extrude', icon: '⬆', label: 'Extrude' },
   ];
 
   const primitives: PrimitiveType[] = ['sphere', 'cube', 'cylinder', 'cone', 'torus'];
 
-  const isSculptTool = currentTool === 'add' || currentTool === 'subtract' || currentTool === 'push';
+  const isSculptTool = ['add', 'subtract', 'push', 'offset', 'extrude'].includes(currentTool);
 
   // Close primitive selector when tool changes away from add-primitive
   useEffect(() => {

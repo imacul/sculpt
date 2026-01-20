@@ -31,7 +31,7 @@ export function useSculpting({
   const isShiftPressed = useRef(false);
   const mousePosition = useRef({ x: 0, y: 0 });
 
-  const isSculptMode = ['add', 'subtract', 'push'].includes(currentTool);
+  const isSculptMode = ['add', 'subtract', 'push', 'offset', 'extrude'].includes(currentTool);
 
   // Handle keyboard modifiers
   useEffect(() => {
