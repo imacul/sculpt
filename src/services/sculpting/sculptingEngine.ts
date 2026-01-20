@@ -196,8 +196,10 @@ function applyDeformation(
 
   let modified = false;
 
-  const isOffsetTool = tool === "offset";
-  const isExtrudeTool = tool === "extrude";
+  const offsetTool = "offset" as ToolType;
+  const extrudeTool = "extrude" as ToolType;
+  const isOffsetTool = tool === offsetTool;
+  const isExtrudeTool = tool === extrudeTool;
 
   // Apply deformation for each symmetry point
   for (let symIdx = 0; symIdx < symmetryPoints.length; symIdx++) {
@@ -266,9 +268,6 @@ function applyDeformation(
           multiplier = deformationStrength * Math.min(moveDistance * 250, 50.0);
           if (invert) multiplier = -multiplier;
         } else if (isOffsetTool || isExtrudeTool) {
-          if (invert) multiplier = -multiplier;
-        } else if (tool === "offset" || tool === "extrude") {
-        } else if (tool === "offset") {
           if (invert) multiplier = -multiplier;
         } else {
           if (tool === "subtract") {
