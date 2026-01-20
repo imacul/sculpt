@@ -17,6 +17,9 @@ interface SceneObjectProps {
   currentTool: ToolType;
   brushSize: number;
   brushStrength: number;
+  offsetDepthMm: number;
+  extrudeDepthMm: number;
+  unitScaleMm: number;
   symmetryAxes: { x: boolean; y: boolean; z: boolean };
   selectedRenderMode?: 'shaded' | 'mesh';
   onSelect: (id: string) => void;
@@ -39,6 +42,9 @@ export function SceneObject({
   currentTool,
   brushSize,
   brushStrength,
+  offsetDepthMm,
+  extrudeDepthMm,
+  unitScaleMm,
   symmetryAxes,
   selectedRenderMode = 'shaded',
   onSelect,
@@ -104,6 +110,9 @@ export function SceneObject({
     currentTool,
     brushSize,
     brushStrength,
+    offsetDepthMm,
+    extrudeDepthMm,
+    unitScaleMm,
     symmetryAxes,
     isSelected,
     geometryVersionRef,

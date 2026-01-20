@@ -15,6 +15,7 @@ export interface SculptingStrokeParams {
   pushToolPreviousPoint?: THREE.Vector3 | null; // in local space, for push tool
   invert?: boolean; // for shift key
   shouldSubdivide?: boolean;
+  depth?: number; // for clinician-controlled offsets/extrudes (in local units)
   cloneGeometry?: boolean; // if true, clones geometry before modifying (for tests)
   ensureSymmetry?: boolean; // if true, runs expensive symmetry check (for tests only)
 }
@@ -180,6 +181,7 @@ function applyDeformation(
   tool: ToolType,
   brushSize: number,
   brushStrength: number,
+  depthOverride: number | undefined,
   clickPoint: THREE.Vector3,
   previousPoint: THREE.Vector3 | null,
   invert: boolean
@@ -242,6 +244,15 @@ function applyDeformation(
         }
 
         const baseStrength = tool === "extrude" ? 0.04 : tool === "offset" ? 0.03 : 0.02;
+        const depthStrength = depthOverride === undefined
+          ? brushStrength * baseStrength
+          : depthOverride;
+        const falloffStrength = tool === "offset"
+          ? falloff
+          : tool === "extrude"
+            ? falloff
+            : falloff * falloff;
+        const strength = depthStrength * falloffStrength;
         const strength = brushStrength * falloff * falloff * baseStrength;
 
         let multiplier = strength;
@@ -252,6 +263,7 @@ function applyDeformation(
             : 0;
           multiplier = strength * Math.min(moveDistance * 250, 50.0);
           if (invert) multiplier = -multiplier;
+        } else if (tool === "offset" || tool === "extrude") {
         } else if (tool === "offset") {
           if (invert) multiplier = -multiplier;
         } else {
@@ -346,6 +358,7 @@ export function applySculptingStroke(
     tool,
     params.brushSize,
     params.brushStrength,
+    params.depth,
     params.clickPoint,
     params.pushToolPreviousPoint || null,
     params.invert || false
