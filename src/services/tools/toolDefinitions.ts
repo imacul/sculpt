@@ -91,7 +91,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     requiresObject: true,
     isSculptingTool: true,
     disablesOrbitControl: true,
-    helpText: 'Hold left-click to offset by depth (mm) • Hold Shift to invert',
+    helpText: 'Click object to offset by depth (mm)',
     brushColor: '#9b59b6',
   },
   {
@@ -101,7 +101,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     requiresObject: true,
     isSculptingTool: true,
     disablesOrbitControl: true,
-    helpText: 'Hold left-click to extrude by depth (mm) • Hold Shift to inset',
+    helpText: 'Click object to extrude by depth (mm)',
     brushColor: '#2ecc71',
   },
   {

@@ -122,19 +122,14 @@ export function ModelingCanvas() {
 
     const isMultiSelect = event?.shiftKey || event?.ctrlKey || event?.metaKey;
 
-    if (currentTool === 'select') {
-      setSelectedObjectIds(prev => {
-        if (isMultiSelect) {
-          // Add or remove from selection
-          return prev.includes(id) ? prev.filter(oid => oid !== id) : [...prev, id];
-        } else {
-          // Replace selection
-          return [id];
-        }
-      });
-    } else {
-      setSelectedObjectIds([id]);
-    }
+    setSelectedObjectIds(prev => {
+      if (isMultiSelect) {
+        // Add or remove from selection
+        return prev.includes(id) ? prev.filter(oid => oid !== id) : [...prev, id];
+      }
+      // Replace selection
+      return [id];
+    });
   }, [currentTool]);
 
   const handleDeleteObject = useCallback((id: string) => {

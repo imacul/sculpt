@@ -67,7 +67,7 @@ export function Scene({
   onMeasurePoint,
 }: SceneProps) {
   const selectedMeshRef = useRef<THREE.Mesh | null>(null);
-  const isSculptingTool = ['add', 'subtract', 'push', 'offset', 'extrude'].includes(currentTool);
+  const isSculptingTool = ['add', 'subtract', 'push'].includes(currentTool);
   const measureLineGeometry = useMemo(() => {
     if (!measurePoints[0] || !measurePoints[1]) return null;
     const geometry = new THREE.BufferGeometry().setFromPoints([measurePoints[0], measurePoints[1]]);
@@ -76,7 +76,7 @@ export function Scene({
 
   const measureLine = useMemo(() => {
     if (!measureLineGeometry) return null;
-    const material = new THREE.LineBasicMaterial({ color: '#4a90e2' });
+    const material = new THREE.LineBasicMaterial({ color: '#ff4fd8' });
     return new THREE.Line(measureLineGeometry, material);
   }, [measureLineGeometry]);
 
@@ -148,13 +148,13 @@ export function Scene({
       {measurePoints[0] && (
         <mesh position={measurePoints[0]}>
           <sphereGeometry args={[0.06, 16, 16]} />
-          <meshStandardMaterial color="#4a90e2" />
+          <meshStandardMaterial color="#ff4fd8" emissive="#ff4fd8" emissiveIntensity={0.6} />
         </mesh>
       )}
       {measurePoints[1] && (
         <mesh position={measurePoints[1]}>
           <sphereGeometry args={[0.06, 16, 16]} />
-          <meshStandardMaterial color="#4a90e2" />
+          <meshStandardMaterial color="#ff4fd8" emissive="#ff4fd8" emissiveIntensity={0.6} />
         </mesh>
       )}
       {measureLine && <primitive object={measureLine} />}

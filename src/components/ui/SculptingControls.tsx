@@ -125,7 +125,7 @@ export function SculptingControls({
                 style={{ width: '100%', accentColor: '#4a90e2' }}
               />
               <div style={{ fontSize: '10px', color: '#8fb9ff', marginTop: '6px' }}>
-                Unit scale: {effectiveUnitScale.toFixed(2)} mm per unit
+                Unit scale: {effectiveUnitScale.toFixed(2)} mm per unit • Click model to apply
               </div>
             </div>
           ) : (

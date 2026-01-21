@@ -145,6 +145,60 @@ export function SceneObject({
     },
   });
 
+  const applyWholeObjectDeformation = useCallback((mode: 'offset' | 'extrude') => {
+    if (!meshRef.current) return;
+    if (!geometryRef.current) return;
+
+    onRequestStateSave?.();
+
+    const geometry = geometryRef.current;
+    const positions = geometry.getAttribute('position');
+    const normals = geometry.getAttribute('normal');
+
+    if (!positions || !normals) return;
+
+    const positionsArray = positions.array as Float32Array;
+    const normalsArray = normals.array as Float32Array;
+
+    const worldScale = meshRef.current.scale.length() / Math.sqrt(3);
+    const depthMm = mode === 'offset' ? offsetDepthMm : extrudeDepthMm;
+    const localDepth = (depthMm / Math.max(unitScaleMm, 0.01)) / worldScale;
+
+    const centroid = new THREE.Vector3();
+    for (let i = 0; i < positions.count; i++) {
+      centroid.x += positionsArray[i * 3];
+      centroid.y += positionsArray[i * 3 + 1];
+      centroid.z += positionsArray[i * 3 + 2];
+    }
+    centroid.divideScalar(Math.max(positions.count, 1));
+
+    for (let i = 0; i < positions.count; i++) {
+      const vx = positionsArray[i * 3];
+      const vy = positionsArray[i * 3 + 1];
+      const vz = positionsArray[i * 3 + 2];
+
+      const moveDirection = mode === 'offset'
+        ? new THREE.Vector3(
+            normalsArray[i * 3],
+            normalsArray[i * 3 + 1],
+            normalsArray[i * 3 + 2]
+          )
+        : new THREE.Vector3(vx, vy, vz).sub(centroid).normalize();
+
+      positionsArray[i * 3] = vx + moveDirection.x * localDepth;
+      positionsArray[i * 3 + 1] = vy + moveDirection.y * localDepth;
+      positionsArray[i * 3 + 2] = vz + moveDirection.z * localDepth;
+    }
+
+    positions.needsUpdate = true;
+    geometry.computeVertexNormals();
+    geometry.computeBoundingBox();
+    geometry.computeBoundingSphere();
+
+    geometryVersionRef.current++;
+    setGeometryUpdateCounter(c => c + 1);
+  }, [extrudeDepthMm, offsetDepthMm, onRequestStateSave, unitScaleMm]);
+
   // Object manipulation (move/scale)
   const {
     isDragging,
@@ -291,6 +345,16 @@ export function SceneObject({
         return;
       }
 
+      if (currentTool === 'offset') {
+        applyWholeObjectDeformation('offset');
+        return;
+      }
+
+      if (currentTool === 'extrude') {
+        applyWholeObjectDeformation('extrude');
+        return;
+      }
+
       if (currentTool === 'select') {
         onSelect(id);
       } else if (currentTool === 'move' || currentTool === 'scale') {
@@ -300,7 +364,7 @@ export function SceneObject({
         onSelect(id);
       }
     }
-  }, [currentTool, isSculptMode, id, onMeasurePoint, onSelect, startDrag]);
+  }, [applyWholeObjectDeformation, currentTool, isSculptMode, id, onMeasurePoint, onSelect, startDrag]);
 
   // Render modes
   const showShaded = !isSelected || (isSelected && selectedRenderMode === 'shaded');
