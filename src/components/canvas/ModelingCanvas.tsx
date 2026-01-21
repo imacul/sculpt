@@ -257,25 +257,30 @@ export function ModelingCanvas() {
   const orbitDisablingTools = getOrbitDisablingTools();
 
   return (
-    <div style={{ width: '100%', height: '100vh', position: 'relative' }}>
+    <div style={{
+      width: '100%',
+      height: '100vh',
+      position: 'relative',
+      background: 'radial-gradient(circle at top, rgba(20, 40, 80, 0.35), rgba(5, 7, 15, 0.95))',
+    }}>
       <Canvas
         camera={{ position: [10, 10, 10], fov: 50 }}
         onClick={handleCanvasClick}
       >
-      <Scene
-        objects={objects}
-        objectGeometries={objectGeometries}
-        selectedObjectIds={selectedObjectIds}
-        currentTool={currentTool}
-        selectedPrimitive={selectedPrimitive}
-        brushSize={brushSize}
-        brushStrength={brushStrength}
-        offsetDepthMm={offsetDepthMm}
-        extrudeDepthMm={extrudeDepthMm}
-        unitScaleMm={unitScaleMm}
-        measurePoints={measurePoints}
-        symmetryAxes={symmetryAxes}
-        selectedRenderMode={selectedRenderMode}
+        <Scene
+          objects={objects}
+          objectGeometries={objectGeometries}
+          selectedObjectIds={selectedObjectIds}
+          currentTool={currentTool}
+          selectedPrimitive={selectedPrimitive}
+          brushSize={brushSize}
+          brushStrength={brushStrength}
+          offsetDepthMm={offsetDepthMm}
+          extrudeDepthMm={extrudeDepthMm}
+          unitScaleMm={unitScaleMm}
+          measurePoints={measurePoints}
+          symmetryAxes={symmetryAxes}
+          selectedRenderMode={selectedRenderMode}
           onSelectObject={handleSelectObject}
           onPlaceObject={handlePlaceObject}
           onPositionChange={handleObjectPositionChange}
@@ -318,32 +323,32 @@ export function ModelingCanvas() {
         <>
           <MobileTouchHint />
           <MobileUI
-          currentTool={currentTool}
-          setCurrentTool={setCurrentTool}
-          selectedPrimitive={selectedPrimitive}
-          setSelectedPrimitive={setSelectedPrimitive}
-          brushSize={brushSize}
-          setBrushSize={setBrushSize}
-          brushStrength={brushStrength}
-          setBrushStrength={setBrushStrength}
-          offsetDepthMm={offsetDepthMm}
-          setOffsetDepthMm={setOffsetDepthMm}
-          extrudeDepthMm={extrudeDepthMm}
-          setExtrudeDepthMm={setExtrudeDepthMm}
-          symmetryAxes={symmetryAxes}
-          setSymmetryAxes={setSymmetryAxes}
-          selectedRenderMode={selectedRenderMode}
-          onRenderModeChange={setSelectedRenderMode}
-          onUndo={handleUndo}
-          onRedo={handleRedo}
-          canUndo={canUndo}
-          canRedo={canRedo}
-          onDeleteSelected={() => {
-            if (selectedObjectIds.length > 0) {
-              selectedObjectIds.forEach(handleDeleteObject);
-            }
-          }}
-          hasSelection={selectedObjectIds.length > 0}
+            currentTool={currentTool}
+            setCurrentTool={setCurrentTool}
+            selectedPrimitive={selectedPrimitive}
+            setSelectedPrimitive={setSelectedPrimitive}
+            brushSize={brushSize}
+            setBrushSize={setBrushSize}
+            brushStrength={brushStrength}
+            setBrushStrength={setBrushStrength}
+            offsetDepthMm={offsetDepthMm}
+            setOffsetDepthMm={setOffsetDepthMm}
+            extrudeDepthMm={extrudeDepthMm}
+            setExtrudeDepthMm={setExtrudeDepthMm}
+            symmetryAxes={symmetryAxes}
+            setSymmetryAxes={setSymmetryAxes}
+            selectedRenderMode={selectedRenderMode}
+            onRenderModeChange={setSelectedRenderMode}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            onDeleteSelected={() => {
+              if (selectedObjectIds.length > 0) {
+                selectedObjectIds.forEach(handleDeleteObject);
+              }
+            }}
+            hasSelection={selectedObjectIds.length > 0}
           />
         </>
       ) : (

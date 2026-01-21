@@ -35,10 +35,12 @@ export function Toolbar({
       <div style={{
         display: 'flex',
         gap: '5px',
-        backgroundColor: 'rgba(0,0,0,0.8)',
+        backgroundColor: 'rgba(6, 10, 20, 0.82)',
         padding: '10px',
-        borderRadius: '8px',
-        boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
+        borderRadius: '12px',
+        border: '1px solid rgba(74, 144, 226, 0.25)',
+        backdropFilter: 'blur(12px)',
+        boxShadow: '0 8px 24px rgba(6, 10, 20, 0.45)',
       }}>
         {TOOL_DEFINITIONS.map((tool) => {
           let isDisabled = false;
@@ -62,11 +64,11 @@ export function Toolbar({
               style={{
                 width: '50px',
                 height: '50px',
-                backgroundColor: currentTool === tool.id ? '#4a90e2' :
-                                isDisabled ? '#1a1a1a' : '#2c2c2c',
-                border: 'none',
-                borderRadius: '6px',
-                color: isDisabled ? '#666' : 'white',
+                backgroundColor: currentTool === tool.id ? 'rgba(74, 144, 226, 0.9)' :
+                                isDisabled ? 'rgba(10, 14, 26, 0.7)' : 'rgba(20, 28, 48, 0.9)',
+                border: '1px solid rgba(74, 144, 226, 0.25)',
+                borderRadius: '10px',
+                color: isDisabled ? '#5e6b85' : 'white',
                 cursor: isDisabled ? 'not-allowed' : 'pointer',
                 display: 'flex',
                 flexDirection: 'column',
@@ -90,10 +92,12 @@ export function Toolbar({
         <div style={{
           display: 'flex',
           gap: '5px',
-          backgroundColor: 'rgba(0,0,0,0.8)',
+          backgroundColor: 'rgba(6, 10, 20, 0.82)',
           padding: '10px',
-          borderRadius: '8px',
-          boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
+          borderRadius: '12px',
+          border: '1px solid rgba(74, 144, 226, 0.25)',
+          backdropFilter: 'blur(12px)',
+          boxShadow: '0 8px 24px rgba(6, 10, 20, 0.45)',
         }}>
           {PRIMITIVE_DEFINITIONS.map((primitive) => (
             <button
@@ -102,9 +106,9 @@ export function Toolbar({
               style={{
                 width: '45px',
                 height: '45px',
-                backgroundColor: selectedPrimitive === primitive.id ? '#4a90e2' : '#2c2c2c',
-                border: 'none',
-                borderRadius: '6px',
+                backgroundColor: selectedPrimitive === primitive.id ? 'rgba(74, 144, 226, 0.9)' : 'rgba(20, 28, 48, 0.9)',
+                border: '1px solid rgba(74, 144, 226, 0.25)',
+                borderRadius: '10px',
                 color: 'white',
                 cursor: 'pointer',
                 display: 'flex',
@@ -136,9 +140,9 @@ export function Toolbar({
             style={{
               width: '45px',
               height: '45px',
-              backgroundColor: '#2c2c2c',
-              border: 'none',
-              borderRadius: '6px',
+              backgroundColor: 'rgba(20, 28, 48, 0.9)',
+              border: '1px solid rgba(74, 144, 226, 0.25)',
+              borderRadius: '10px',
               color: 'white',
               cursor: 'pointer',
               display: 'flex',

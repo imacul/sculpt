@@ -46,9 +46,12 @@ export function SculptingControls({
       position: 'absolute',
       top: 20,
       left: 20,
-      backgroundColor: 'rgba(0,0,0,0.8)',
+      backgroundColor: 'rgba(6, 10, 20, 0.82)',
       padding: '15px',
-      borderRadius: '8px',
+      borderRadius: '12px',
+      border: '1px solid rgba(74, 144, 226, 0.25)',
+      backdropFilter: 'blur(12px)',
+      boxShadow: '0 8px 24px rgba(6, 10, 20, 0.45)',
       color: 'white',
       fontFamily: 'monospace',
       minWidth: '250px'
@@ -95,7 +98,7 @@ export function SculptingControls({
                 step="0.1"
                 value={brushSize}
                 onChange={(e) => onBrushSizeChange(parseFloat(e.target.value))}
-                style={{ width: '150px', marginLeft: '10px' }}
+                style={{ width: '150px', marginLeft: '10px', accentColor: '#4a90e2' }}
               />
             </label>
           </div>
@@ -104,32 +107,24 @@ export function SculptingControls({
             <div style={{ marginBottom: '12px' }}>
               <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span>Depth: {(currentTool === 'offset' ? offsetDepthMm : extrudeDepthMm).toFixed(2)} mm</span>
-                <input
-                  type="number"
-                  min="0.01"
-                  step="0.1"
-                  value={currentTool === 'offset' ? offsetDepthMm : extrudeDepthMm}
-                  onChange={(e) => {
-                    const value = parseFloat(e.target.value);
-                    if (currentTool === 'offset') {
-                      onOffsetDepthChange(Number.isFinite(value) && value > 0 ? value : 0.1);
-                    } else {
-                      onExtrudeDepthChange(Number.isFinite(value) && value > 0 ? value : 0.1);
-                    }
-                  }}
-                  style={{
-                    width: '120px',
-                    marginLeft: '10px',
-                    padding: '4px',
-                    backgroundColor: '#1a1a1a',
-                    border: '1px solid #333',
-                    color: 'white',
-                    borderRadius: '4px',
-                    fontSize: '11px',
-                  }}
-                />
               </label>
-              <div style={{ fontSize: '10px', color: '#aaa', marginTop: '4px' }}>
+              <input
+                type="range"
+                min="0.1"
+                max="10"
+                step="0.1"
+                value={currentTool === 'offset' ? offsetDepthMm : extrudeDepthMm}
+                onChange={(e) => {
+                  const value = parseFloat(e.target.value);
+                  if (currentTool === 'offset') {
+                    onOffsetDepthChange(Number.isFinite(value) && value > 0 ? value : 0.1);
+                  } else {
+                    onExtrudeDepthChange(Number.isFinite(value) && value > 0 ? value : 0.1);
+                  }
+                }}
+                style={{ width: '100%', accentColor: '#4a90e2' }}
+              />
+              <div style={{ fontSize: '10px', color: '#8fb9ff', marginTop: '6px' }}>
                 Unit scale: {effectiveUnitScale.toFixed(2)} mm per unit
               </div>
             </div>
@@ -137,15 +132,15 @@ export function SculptingControls({
             <div style={{ marginBottom: '12px' }}>
               <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span>Strength: {(brushStrength * 100).toFixed(0)}%</span>
-                <input
-                  type="range"
-                  min="0.1"
-                  max="1"
-                  step="0.1"
-                  value={brushStrength}
-                  onChange={(e) => onBrushStrengthChange(parseFloat(e.target.value))}
-                  style={{ width: '150px', marginLeft: '10px' }}
-                />
+              <input
+                type="range"
+                min="0.1"
+                max="1"
+                step="0.1"
+                value={brushStrength}
+                onChange={(e) => onBrushStrengthChange(parseFloat(e.target.value))}
+                style={{ width: '150px', marginLeft: '10px', accentColor: '#4a90e2' }}
+              />
               </label>
             </div>
           )}

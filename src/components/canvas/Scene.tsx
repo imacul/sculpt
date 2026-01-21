@@ -82,19 +82,22 @@ export function Scene({
 
   return (
     <>
+      <color attach="background" args={['#05070f']} />
+      <fog attach="fog" args={['#05070f', 12, 65]} />
       <ambientLight intensity={0.5} />
-      <directionalLight position={[10, 10, 5]} intensity={1} />
+      <directionalLight position={[10, 12, 8]} intensity={1.1} color="#bcd7ff" />
+      <directionalLight position={[-10, -6, -8]} intensity={0.4} color="#4a6cff" />
 
       <Grid
-        args={[100, 100]}
-        cellSize={1}
-        cellThickness={0.5}
-        cellColor="#6f6f6f"
-        sectionSize={5}
-        sectionThickness={1}
-        sectionColor="#9d9d9d"
-        fadeDistance={50}
-        fadeStrength={1}
+        args={[120, 120]}
+        cellSize={0.6}
+        cellThickness={0.4}
+        cellColor="#14233f"
+        sectionSize={6}
+        sectionThickness={1.2}
+        sectionColor="#4a90e2"
+        fadeDistance={70}
+        fadeStrength={1.6}
         followCamera={false}
         infiniteGrid
       />
