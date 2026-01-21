@@ -85,6 +85,26 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     brushColor: '#e2a44a',
   },
   {
+    id: 'offset',
+    icon: '⇵',
+    label: 'Offset',
+    requiresObject: true,
+    isSculptingTool: true,
+    disablesOrbitControl: true,
+    helpText: 'Click object to offset by depth (mm)',
+    brushColor: '#9b59b6',
+  },
+  {
+    id: 'extrude',
+    icon: '⬆',
+    label: 'Extrude',
+    requiresObject: true,
+    isSculptingTool: true,
+    disablesOrbitControl: true,
+    helpText: 'Click object to extrude by depth (mm)',
+    brushColor: '#2ecc71',
+  },
+  {
     id: 'join',
     icon: '∪',
     label: 'Join',
@@ -92,6 +112,15 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     isSculptingTool: false,
     disablesOrbitControl: false,
     helpText: 'Select two objects to join them',
+  },
+  {
+    id: 'measure',
+    icon: '📏',
+    label: 'Measure',
+    requiresObject: false,
+    isSculptingTool: false,
+    disablesOrbitControl: true,
+    helpText: 'Click two points to measure distance',
   },
 ];
 

@@ -17,6 +17,9 @@ interface SceneObjectProps {
   currentTool: ToolType;
   brushSize: number;
   brushStrength: number;
+  offsetDepthMm: number;
+  extrudeDepthMm: number;
+  unitScaleMm: number;
   symmetryAxes: { x: boolean; y: boolean; z: boolean };
   selectedRenderMode?: 'shaded' | 'mesh';
   onSelect: (id: string) => void;
@@ -26,6 +29,7 @@ interface SceneObjectProps {
   onVertexCountUpdate?: (objectId: string, count: number) => void;
   onGeometryUpdate?: (objectId: string, geometry: THREE.BufferGeometry) => void;
   onRequestStateSave?: () => void;
+  onMeasurePoint?: (point: THREE.Vector3) => void;
 }
 
 export function SceneObject({
@@ -39,6 +43,9 @@ export function SceneObject({
   currentTool,
   brushSize,
   brushStrength,
+  offsetDepthMm,
+  extrudeDepthMm,
+  unitScaleMm,
   symmetryAxes,
   selectedRenderMode = 'shaded',
   onSelect,
@@ -48,6 +55,7 @@ export function SceneObject({
   onVertexCountUpdate,
   onGeometryUpdate,
   onRequestStateSave,
+  onMeasurePoint,
 }: SceneObjectProps) {
   const internalMeshRef = useRef<THREE.Mesh>(null);
   const meshRef = externalMeshRef || internalMeshRef;
@@ -99,11 +107,14 @@ export function SceneObject({
   }, [geometryUpdateCounter, id, onVertexCountUpdate, onGeometryUpdate]);
 
   // Sculpting logic
-  const { isSculptMode, sculpt, resetPushTool, updateMousePosition } = useSculpting({
+  const { isSculptMode, sculpt, resetPushTool, updateMousePosition, setShiftState } = useSculpting({
     meshRef,
     currentTool,
     brushSize,
     brushStrength,
+    offsetDepthMm,
+    extrudeDepthMm,
+    unitScaleMm,
     symmetryAxes,
     isSelected,
     geometryVersionRef,
@@ -134,6 +145,60 @@ export function SceneObject({
     },
   });
 
+  const applyWholeObjectDeformation = useCallback((mode: 'offset' | 'extrude') => {
+    if (!meshRef.current) return;
+    if (!geometryRef.current) return;
+
+    onRequestStateSave?.();
+
+    const geometry = geometryRef.current;
+    const positions = geometry.getAttribute('position');
+    const normals = geometry.getAttribute('normal');
+
+    if (!positions || !normals) return;
+
+    const positionsArray = positions.array as Float32Array;
+    const normalsArray = normals.array as Float32Array;
+
+    const worldScale = meshRef.current.scale.length() / Math.sqrt(3);
+    const depthMm = mode === 'offset' ? offsetDepthMm : extrudeDepthMm;
+    const localDepth = (depthMm / Math.max(unitScaleMm, 0.01)) / worldScale;
+
+    const centroid = new THREE.Vector3();
+    for (let i = 0; i < positions.count; i++) {
+      centroid.x += positionsArray[i * 3];
+      centroid.y += positionsArray[i * 3 + 1];
+      centroid.z += positionsArray[i * 3 + 2];
+    }
+    centroid.divideScalar(Math.max(positions.count, 1));
+
+    for (let i = 0; i < positions.count; i++) {
+      const vx = positionsArray[i * 3];
+      const vy = positionsArray[i * 3 + 1];
+      const vz = positionsArray[i * 3 + 2];
+
+      const moveDirection = mode === 'offset'
+        ? new THREE.Vector3(
+            normalsArray[i * 3],
+            normalsArray[i * 3 + 1],
+            normalsArray[i * 3 + 2]
+          )
+        : new THREE.Vector3(vx, vy, vz).sub(centroid).normalize();
+
+      positionsArray[i * 3] = vx + moveDirection.x * localDepth;
+      positionsArray[i * 3 + 1] = vy + moveDirection.y * localDepth;
+      positionsArray[i * 3 + 2] = vz + moveDirection.z * localDepth;
+    }
+
+    positions.needsUpdate = true;
+    geometry.computeVertexNormals();
+    geometry.computeBoundingBox();
+    geometry.computeBoundingSphere();
+
+    geometryVersionRef.current++;
+    setGeometryUpdateCounter(c => c + 1);
+  }, [extrudeDepthMm, offsetDepthMm, onRequestStateSave, unitScaleMm]);
+
   // Object manipulation (move/scale)
   const {
     isDragging,
@@ -153,11 +218,12 @@ export function SceneObject({
   useEffect(() => {
     const canvas = gl.domElement;
 
-    const handlePointerStart = (clientX: number, clientY: number) => {
+    const handlePointerStart = (clientX: number, clientY: number, shiftPressed: boolean) => {
       if (isSculptMode && isSelected) {
         // Reset modification tracking for this stroke
         hasModifiedDuringStroke.current = false;
         setIsMouseDown(true);
+        setShiftState(shiftPressed);
 
         const rect = canvas.getBoundingClientRect();
         const x = ((clientX - rect.left) / rect.width) * 2 - 1;
@@ -170,7 +236,7 @@ export function SceneObject({
       if (event.button === 0) {
         event.preventDefault();
         event.stopPropagation();
-        handlePointerStart(event.clientX, event.clientY);
+        handlePointerStart(event.clientX, event.clientY, event.shiftKey);
       }
     };
 
@@ -179,7 +245,7 @@ export function SceneObject({
         event.preventDefault();
         event.stopPropagation();
         const touch = event.touches[0];
-        handlePointerStart(touch.clientX, touch.clientY);
+        handlePointerStart(touch.clientX, touch.clientY, false);
       }
     };
 
@@ -203,7 +269,7 @@ export function SceneObject({
       }
     };
 
-    const handlePointerMove = (clientX: number, clientY: number) => {
+    const handlePointerMove = (clientX: number, clientY: number, shiftPressed: boolean) => {
       const rect = canvas.getBoundingClientRect();
       const x = ((clientX - rect.left) / rect.width) * 2 - 1;
       const y = -((clientY - rect.top) / rect.height) * 2 + 1;
@@ -211,19 +277,20 @@ export function SceneObject({
       if (isDragging) {
         updateDrag(x, y);
       } else if (isSculptMode && isSelected) {
+        setShiftState(shiftPressed);
         updateMousePosition(x, y);
       }
     };
 
     const handleMouseMove = (event: MouseEvent) => {
-      handlePointerMove(event.clientX, event.clientY);
+      handlePointerMove(event.clientX, event.clientY, event.shiftKey);
     };
 
     const handleTouchMove = (event: TouchEvent) => {
       if (event.touches.length === 1) {
         event.preventDefault();
         const touch = event.touches[0];
-        handlePointerMove(touch.clientX, touch.clientY);
+        handlePointerMove(touch.clientX, touch.clientY, false);
       }
     };
 
@@ -273,6 +340,21 @@ export function SceneObject({
     if (e.button === 0) {
       e.stopPropagation();
 
+      if (currentTool === 'measure' && onMeasurePoint) {
+        onMeasurePoint(e.point.clone());
+        return;
+      }
+
+      if (currentTool === 'offset') {
+        applyWholeObjectDeformation('offset');
+        return;
+      }
+
+      if (currentTool === 'extrude') {
+        applyWholeObjectDeformation('extrude');
+        return;
+      }
+
       if (currentTool === 'select') {
         onSelect(id);
       } else if (currentTool === 'move' || currentTool === 'scale') {
@@ -282,7 +364,7 @@ export function SceneObject({
         onSelect(id);
       }
     }
-  }, [currentTool, isSculptMode, id, onSelect, startDrag]);
+  }, [applyWholeObjectDeformation, currentTool, isSculptMode, id, onMeasurePoint, onSelect, startDrag]);
 
   // Render modes
   const showShaded = !isSelected || (isSelected && selectedRenderMode === 'shaded');

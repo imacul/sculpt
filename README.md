@@ -10,12 +10,15 @@ https://github.com/user-attachments/assets/3f3c7f82-a05a-400a-be55-bfd3fc1ea78a
 
 ## Features
 
-- **Real-time 3D Sculpting**: Add, subtract, and push mesh surfaces with dynamic subdivision
+- **Real-time 3D Sculpting**: Add, subtract, push, offset, and extrude mesh surfaces with dynamic subdivision
 - **Multiple Primitive Shapes**: Start with spheres, cubes, cylinders, cones, and torus shapes
 - **Advanced Mesh Manipulation**:
   - Symmetric subdivision for smooth surface refinement
   - Adaptive tessellation based on brush proximity
   - Real-time geometry updates with optimized performance
+- **Clinical Measurement Overlay**:
+  - Volume, dimensions, and orientation angles in clinician-friendly units
+  - Configurable unit scale (mm per scene unit)
 - **Professional Tools**:
   - Sculpting brushes (add, subtract, push)
   - Transform tools (move, scale, rotate)
@@ -72,6 +75,9 @@ npm run dev
   - **Add**: Click and drag to add material
   - **Subtract**: Click and drag to remove material
   - **Push**: Click and drag to push/pull surfaces
+  - **Offset**: Click and drag to offset surface normals with clinician-defined depth (mm)
+  - **Extrude**: Click and drag to extrude or inset regions by depth (mm)
+- **Measure**: Click two points on the mesh to measure distance
 - **Transform Mode**:
   - **Move**: Click and drag to move objects
   - **Scale**: Click and drag to scale objects

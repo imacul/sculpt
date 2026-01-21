@@ -9,6 +9,9 @@ interface SculptingParams {
   currentTool: ToolType;
   brushSize: number;
   brushStrength: number;
+  offsetDepthMm: number;
+  extrudeDepthMm: number;
+  unitScaleMm: number;
   symmetryAxes: { x: boolean; y: boolean; z: boolean };
   isSelected: boolean;
   geometryVersionRef: React.MutableRefObject<number>;
@@ -20,6 +23,9 @@ export function useSculpting({
   currentTool,
   brushSize,
   brushStrength,
+  offsetDepthMm,
+  extrudeDepthMm,
+  unitScaleMm,
   symmetryAxes,
   isSelected,
   geometryVersionRef,
@@ -66,6 +72,10 @@ export function useSculpting({
     mousePosition.current = { x, y };
   }, []);
 
+  const setShiftState = useCallback((pressed: boolean) => {
+    isShiftPressed.current = pressed;
+  }, []);
+
   const sculpt = useCallback(() => {
     if (!meshRef.current || !isSelected || !isSculptMode) {
       return false;
@@ -106,6 +116,12 @@ export function useSculpting({
     // Apply sculpting stroke using pure function
     const worldScale = mesh.scale.length() / Math.sqrt(3);
     const localBrushSize = brushSize / worldScale;
+    const depthMm = currentTool === 'offset' ? offsetDepthMm
+      : currentTool === 'extrude' ? extrudeDepthMm
+      : null;
+    const depthLocal = depthMm !== null
+      ? (depthMm / Math.max(unitScaleMm, 0.01)) / worldScale
+      : undefined;
 
     const result = applySculptingStroke({
       geometry,
@@ -113,6 +129,7 @@ export function useSculpting({
       tool: currentTool,
       brushSize: localBrushSize,
       brushStrength,
+      depth: depthLocal,
       symmetryAxes,
       pushToolPreviousPoint: localPreviousPoint,
       invert: isShiftPressed.current,
@@ -156,5 +173,6 @@ export function useSculpting({
     sculpt,
     resetPushTool,
     updateMousePosition,
+    setShiftState,
   };
 }
