@@ -46,6 +46,7 @@ export function ModelingCanvas() {
   const [unitScaleMm, setUnitScaleMm] = useState(1);
   const [offsetDepthMm, setOffsetDepthMm] = useState(2);
   const [extrudeDepthMm, setExtrudeDepthMm] = useState(2);
+  const [measurePoints, setMeasurePoints] = useState<Array<THREE.Vector3 | null>>([null, null]);
 
   // Undo/Redo system
   const {
@@ -198,6 +199,20 @@ export function ModelingCanvas() {
     }
   }, [requestStateSave]);
 
+  const handleMeasurePoint = useCallback((point: THREE.Vector3) => {
+    setMeasurePoints(([first, second]) => {
+      if (!first) return [point, null];
+      if (!second) return [first, point];
+      return [point, null];
+    });
+  }, []);
+
+  useEffect(() => {
+    if (currentTool !== 'measure') {
+      setMeasurePoints([null, null]);
+    }
+  }, [currentTool]);
+
   // Tool-specific action handlers
   const handleJoinSelected = useCallback(() => {
     if (selectedObjectIds.length !== 2) return;
@@ -258,6 +273,7 @@ export function ModelingCanvas() {
         offsetDepthMm={offsetDepthMm}
         extrudeDepthMm={extrudeDepthMm}
         unitScaleMm={unitScaleMm}
+        measurePoints={measurePoints}
         symmetryAxes={symmetryAxes}
         selectedRenderMode={selectedRenderMode}
           onSelectObject={handleSelectObject}
@@ -271,6 +287,7 @@ export function ModelingCanvas() {
             setObjectGeometries(prev => ({ ...prev, [objectId]: geometry }));
           }}
           onRequestStateSave={saveCurrentState}
+          onMeasurePoint={handleMeasurePoint}
         />
 
         <OrbitControls
@@ -354,6 +371,7 @@ export function ModelingCanvas() {
             objectVertexCounts={objectVertexCounts}
             objectGeometries={objectGeometries}
             unitScaleMm={unitScaleMm}
+            measurePoints={measurePoints}
             onDeselectObject={() => setSelectedObjectIds([])}
             onDeleteObject={handleDeleteObject}
             onJoinSelected={handleJoinSelected}
@@ -362,6 +380,7 @@ export function ModelingCanvas() {
             onObjectRotationChange={handleObjectRotationChange}
             onObjectScaleChange={handleObjectScaleChange}
             onUnitScaleChange={setUnitScaleMm}
+            onClearMeasurements={() => setMeasurePoints([null, null])}
           />
 
           <SculptingControls
@@ -385,6 +404,8 @@ export function ModelingCanvas() {
           <StatusOverlay
             currentTool={currentTool}
             selectedPrimitive={selectedPrimitive}
+            measurePoints={measurePoints}
+            unitScaleMm={unitScaleMm}
           />
         </>
       )}

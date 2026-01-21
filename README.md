@@ -77,6 +77,7 @@ npm run dev
   - **Push**: Click and drag to push/pull surfaces
   - **Offset**: Click and drag to offset surface normals with clinician-defined depth (mm)
   - **Extrude**: Click and drag to extrude or inset regions by depth (mm)
+- **Measure**: Click two points on the mesh to measure distance
 - **Transform Mode**:
   - **Move**: Click and drag to move objects
   - **Scale**: Click and drag to scale objects

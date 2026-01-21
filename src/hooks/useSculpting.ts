@@ -72,6 +72,10 @@ export function useSculpting({
     mousePosition.current = { x, y };
   }, []);
 
+  const setShiftState = useCallback((pressed: boolean) => {
+    isShiftPressed.current = pressed;
+  }, []);
+
   const sculpt = useCallback(() => {
     if (!meshRef.current || !isSelected || !isSculptMode) {
       return false;
@@ -169,5 +173,6 @@ export function useSculpting({
     sculpt,
     resetPushTool,
     updateMousePosition,
+    setShiftState,
   };
 }

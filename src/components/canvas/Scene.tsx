@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { Grid } from '@react-three/drei';
 import { SceneObject } from '../objects/SceneObject';
@@ -26,6 +26,7 @@ interface SceneProps {
   offsetDepthMm: number;
   extrudeDepthMm: number;
   unitScaleMm: number;
+  measurePoints: Array<THREE.Vector3 | null>;
   symmetryAxes: { x: boolean; y: boolean; z: boolean };
   selectedRenderMode: 'shaded' | 'mesh';
   onSelectObject: (id: string | null) => void;
@@ -35,6 +36,7 @@ interface SceneProps {
   onVertexCountUpdate: (objectId: string, count: number) => void;
   onGeometryUpdate: (objectId: string, geometry: THREE.BufferGeometry) => void;
   onRequestStateSave: () => void;
+  onMeasurePoint: (point: THREE.Vector3) => void;
 }
 
 function AxesHelper() {
@@ -52,6 +54,7 @@ export function Scene({
   offsetDepthMm,
   extrudeDepthMm,
   unitScaleMm,
+  measurePoints,
   symmetryAxes,
   selectedRenderMode,
   onSelectObject,
@@ -61,9 +64,21 @@ export function Scene({
   onVertexCountUpdate,
   onGeometryUpdate,
   onRequestStateSave,
+  onMeasurePoint,
 }: SceneProps) {
   const selectedMeshRef = useRef<THREE.Mesh | null>(null);
   const isSculptingTool = ['add', 'subtract', 'push', 'offset', 'extrude'].includes(currentTool);
+  const measureLineGeometry = useMemo(() => {
+    if (!measurePoints[0] || !measurePoints[1]) return null;
+    const geometry = new THREE.BufferGeometry().setFromPoints([measurePoints[0], measurePoints[1]]);
+    return geometry;
+  }, [measurePoints]);
+
+  const measureLine = useMemo(() => {
+    if (!measureLineGeometry) return null;
+    const material = new THREE.LineBasicMaterial({ color: '#4a90e2' });
+    return new THREE.Line(measureLineGeometry, material);
+  }, [measureLineGeometry]);
 
   return (
     <>
@@ -123,8 +138,23 @@ export function Scene({
           onVertexCountUpdate={onVertexCountUpdate}
           onGeometryUpdate={onGeometryUpdate}
           onRequestStateSave={onRequestStateSave}
+          onMeasurePoint={onMeasurePoint}
         />
       ))}
+
+      {measurePoints[0] && (
+        <mesh position={measurePoints[0]}>
+          <sphereGeometry args={[0.06, 16, 16]} />
+          <meshStandardMaterial color="#4a90e2" />
+        </mesh>
+      )}
+      {measurePoints[1] && (
+        <mesh position={measurePoints[1]}>
+          <sphereGeometry args={[0.06, 16, 16]} />
+          <meshStandardMaterial color="#4a90e2" />
+        </mesh>
+      )}
+      {measureLine && <primitive object={measureLine} />}
 
       <BrushPreview
         brushSize={brushSize}

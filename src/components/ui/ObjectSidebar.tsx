@@ -17,6 +17,7 @@ interface ObjectSidebarProps {
   objectVertexCounts: Record<string, number>;
   objectGeometries: Record<string, THREE.BufferGeometry>;
   unitScaleMm: number;
+  measurePoints: Array<THREE.Vector3 | null>;
   onDeselectObject: () => void;
   onDeleteObject: (id: string) => void;
   onJoinSelected: () => void;
@@ -25,6 +26,7 @@ interface ObjectSidebarProps {
   onObjectRotationChange: (id: string, rotation: [number, number, number]) => void;
   onObjectScaleChange: (id: string, scale: [number, number, number]) => void;
   onUnitScaleChange: (scale: number) => void;
+  onClearMeasurements: () => void;
 }
 
 export function ObjectSidebar({
@@ -34,6 +36,7 @@ export function ObjectSidebar({
   objectVertexCounts,
   objectGeometries,
   unitScaleMm,
+  measurePoints,
   onDeselectObject,
   onDeleteObject,
   onJoinSelected,
@@ -42,6 +45,7 @@ export function ObjectSidebar({
   onObjectRotationChange,
   onObjectScaleChange,
   onUnitScaleChange,
+  onClearMeasurements,
 }: ObjectSidebarProps) {
   const selectionCount = selectedObjectIds.length;
   const selectedObject = objects.find(obj => obj.id === selectedObjectIds[0]);
@@ -62,6 +66,8 @@ export function ObjectSidebar({
   const effectiveUnitScale = Number.isFinite(unitScaleMm) && unitScaleMm > 0 ? unitScaleMm : 1;
   const selectedVolume = selectedGeometry ? Math.abs(computeGeometryVolume(selectedGeometry)) : null;
   const selectedBounds = selectedGeometry ? getGeometryBoundsSize(selectedGeometry) : null;
+  const [measureStart, measureEnd] = measurePoints;
+  const measuredDistance = measureStart && measureEnd ? measureStart.distanceTo(measureEnd) : null;
 
   return (
     <div style={{
@@ -213,6 +219,30 @@ export function ObjectSidebar({
             </div>
           </div>
         ) : null}
+        <div style={{ marginTop: '10px', fontSize: '11px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <strong>Point Distance:</strong>
+            <button
+              onClick={onClearMeasurements}
+              style={{
+                backgroundColor: '#2c2c2c',
+                border: 'none',
+                borderRadius: '4px',
+                color: 'white',
+                cursor: 'pointer',
+                padding: '2px 6px',
+                fontSize: '10px',
+              }}
+            >
+              Clear
+            </button>
+          </div>
+          <div>
+            {measuredDistance === null
+              ? 'Click two points to measure'
+              : `${(measuredDistance * effectiveUnitScale).toFixed(2)} mm`}
+          </div>
+        </div>
       </div>
 
       {/* Transform Controls (only for single selection) */}

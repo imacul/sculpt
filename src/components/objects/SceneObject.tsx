@@ -29,6 +29,7 @@ interface SceneObjectProps {
   onVertexCountUpdate?: (objectId: string, count: number) => void;
   onGeometryUpdate?: (objectId: string, geometry: THREE.BufferGeometry) => void;
   onRequestStateSave?: () => void;
+  onMeasurePoint?: (point: THREE.Vector3) => void;
 }
 
 export function SceneObject({
@@ -54,6 +55,7 @@ export function SceneObject({
   onVertexCountUpdate,
   onGeometryUpdate,
   onRequestStateSave,
+  onMeasurePoint,
 }: SceneObjectProps) {
   const internalMeshRef = useRef<THREE.Mesh>(null);
   const meshRef = externalMeshRef || internalMeshRef;
@@ -105,7 +107,7 @@ export function SceneObject({
   }, [geometryUpdateCounter, id, onVertexCountUpdate, onGeometryUpdate]);
 
   // Sculpting logic
-  const { isSculptMode, sculpt, resetPushTool, updateMousePosition } = useSculpting({
+  const { isSculptMode, sculpt, resetPushTool, updateMousePosition, setShiftState } = useSculpting({
     meshRef,
     currentTool,
     brushSize,
@@ -162,11 +164,12 @@ export function SceneObject({
   useEffect(() => {
     const canvas = gl.domElement;
 
-    const handlePointerStart = (clientX: number, clientY: number) => {
+    const handlePointerStart = (clientX: number, clientY: number, shiftPressed: boolean) => {
       if (isSculptMode && isSelected) {
         // Reset modification tracking for this stroke
         hasModifiedDuringStroke.current = false;
         setIsMouseDown(true);
+        setShiftState(shiftPressed);
 
         const rect = canvas.getBoundingClientRect();
         const x = ((clientX - rect.left) / rect.width) * 2 - 1;
@@ -179,7 +182,7 @@ export function SceneObject({
       if (event.button === 0) {
         event.preventDefault();
         event.stopPropagation();
-        handlePointerStart(event.clientX, event.clientY);
+        handlePointerStart(event.clientX, event.clientY, event.shiftKey);
       }
     };
 
@@ -188,7 +191,7 @@ export function SceneObject({
         event.preventDefault();
         event.stopPropagation();
         const touch = event.touches[0];
-        handlePointerStart(touch.clientX, touch.clientY);
+        handlePointerStart(touch.clientX, touch.clientY, false);
       }
     };
 
@@ -212,7 +215,7 @@ export function SceneObject({
       }
     };
 
-    const handlePointerMove = (clientX: number, clientY: number) => {
+    const handlePointerMove = (clientX: number, clientY: number, shiftPressed: boolean) => {
       const rect = canvas.getBoundingClientRect();
       const x = ((clientX - rect.left) / rect.width) * 2 - 1;
       const y = -((clientY - rect.top) / rect.height) * 2 + 1;
@@ -220,19 +223,20 @@ export function SceneObject({
       if (isDragging) {
         updateDrag(x, y);
       } else if (isSculptMode && isSelected) {
+        setShiftState(shiftPressed);
         updateMousePosition(x, y);
       }
     };
 
     const handleMouseMove = (event: MouseEvent) => {
-      handlePointerMove(event.clientX, event.clientY);
+      handlePointerMove(event.clientX, event.clientY, event.shiftKey);
     };
 
     const handleTouchMove = (event: TouchEvent) => {
       if (event.touches.length === 1) {
         event.preventDefault();
         const touch = event.touches[0];
-        handlePointerMove(touch.clientX, touch.clientY);
+        handlePointerMove(touch.clientX, touch.clientY, false);
       }
     };
 
@@ -282,6 +286,11 @@ export function SceneObject({
     if (e.button === 0) {
       e.stopPropagation();
 
+      if (currentTool === 'measure' && onMeasurePoint) {
+        onMeasurePoint(e.point.clone());
+        return;
+      }
+
       if (currentTool === 'select') {
         onSelect(id);
       } else if (currentTool === 'move' || currentTool === 'scale') {
@@ -291,7 +300,7 @@ export function SceneObject({
         onSelect(id);
       }
     }
-  }, [currentTool, isSculptMode, id, onSelect, startDrag]);
+  }, [currentTool, isSculptMode, id, onMeasurePoint, onSelect, startDrag]);
 
   // Render modes
   const showShaded = !isSelected || (isSelected && selectedRenderMode === 'shaded');

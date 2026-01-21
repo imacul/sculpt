@@ -113,6 +113,15 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     disablesOrbitControl: false,
     helpText: 'Select two objects to join them',
   },
+  {
+    id: 'measure',
+    icon: '📏',
+    label: 'Measure',
+    requiresObject: false,
+    isSculptingTool: false,
+    disablesOrbitControl: true,
+    helpText: 'Click two points to measure distance',
+  },
 ];
 
 export const PRIMITIVE_DEFINITIONS: PrimitiveDefinition[] = [
