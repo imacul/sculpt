@@ -117,7 +117,7 @@ export function ModelingCanvas() {
     requestStateSave();
   }, [requestStateSave]);
 
-  const handleSelectObject = useCallback((id: string | null, event?: React.MouseEvent) => {
+  const handleSelectObject = useCallback((id: string | null, event?: React.MouseEvent | any) => {
     if (!id) return;
 
     const isMultiSelect = event?.shiftKey || event?.ctrlKey || event?.metaKey;
