@@ -43,6 +43,10 @@ export function ModelingCanvas() {
   const [selectedRenderMode, setSelectedRenderMode] = useState<'shaded' | 'mesh'>('shaded');
   const [objectVertexCounts, setObjectVertexCounts] = useState<Record<string, number>>({});
   const [objectGeometries, setObjectGeometries] = useState<Record<string, THREE.BufferGeometry>>({});
+  const [unitScaleMm, setUnitScaleMm] = useState(1);
+  const [offsetDepthMm, setOffsetDepthMm] = useState(2);
+  const [extrudeDepthMm, setExtrudeDepthMm] = useState(2);
+  const [measurePoints, setMeasurePoints] = useState<Array<THREE.Vector3 | null>>([null, null]);
 
   // Undo/Redo system
   const {
@@ -113,24 +117,19 @@ export function ModelingCanvas() {
     requestStateSave();
   }, [requestStateSave]);
 
-  const handleSelectObject = useCallback((id: string | null, event?: React.MouseEvent) => {
+  const handleSelectObject = useCallback((id: string | null, event?: React.MouseEvent | any) => {
     if (!id) return;
 
     const isMultiSelect = event?.shiftKey || event?.ctrlKey || event?.metaKey;
 
-    if (currentTool === 'select') {
-      setSelectedObjectIds(prev => {
-        if (isMultiSelect) {
-          // Add or remove from selection
-          return prev.includes(id) ? prev.filter(oid => oid !== id) : [...prev, id];
-        } else {
-          // Replace selection
-          return [id];
-        }
-      });
-    } else {
-      setSelectedObjectIds([id]);
-    }
+    setSelectedObjectIds(prev => {
+      if (isMultiSelect) {
+        // Add or remove from selection
+        return prev.includes(id) ? prev.filter(oid => oid !== id) : [...prev, id];
+      }
+      // Replace selection
+      return [id];
+    });
   }, [currentTool]);
 
   const handleDeleteObject = useCallback((id: string) => {
@@ -195,45 +194,70 @@ export function ModelingCanvas() {
     }
   }, [requestStateSave]);
 
+  const handleMeasurePoint = useCallback((point: THREE.Vector3) => {
+    setMeasurePoints(([first, second]) => {
+      if (!first) return [point, null];
+      if (!second) return [first, point];
+      return [point, null];
+    });
+  }, []);
+
+  useEffect(() => {
+    if (currentTool !== 'measure') {
+      setMeasurePoints([null, null]);
+    }
+  }, [currentTool]);
+
   // Tool-specific action handlers
+  const handleJoinSelected = useCallback(() => {
+    if (selectedObjectIds.length !== 2) return;
+
+    const [id1, id2] = selectedObjectIds;
+    const geometry1 = objectGeometries[id1];
+    const geometry2 = objectGeometries[id2];
+
+    if (!geometry1 || !geometry2) return;
+
+    const newGeometry = BooleanOperations.join(geometry1, geometry2);
+    if (!newGeometry) return;
+
+    const newObject: SceneObjectData = {
+      id: `object_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      type: 'custom',
+      position: [0, 0, 0],
+      rotation: [0, 0, 0],
+      scale: [1, 1, 1],
+    };
+
+    saveCurrentState();
+
+    setObjects(prev => [...prev.filter(o => o.id !== id1 && o.id !== id2), newObject]);
+    setObjectGeometries(prev => {
+      const newGeometries = { ...prev };
+      delete newGeometries[id1];
+      delete newGeometries[id2];
+      return { ...newGeometries, [newObject.id]: newGeometry };
+    });
+    setSelectedObjectIds([newObject.id]);
+    setCurrentTool('select');
+    requestStateSave();
+  }, [objectGeometries, requestStateSave, saveCurrentState, selectedObjectIds]);
+
   useEffect(() => {
     if (currentTool === 'join' && selectedObjectIds.length === 2) {
-      const [id1, id2] = selectedObjectIds;
-      const geometry1 = objectGeometries[id1];
-      const geometry2 = objectGeometries[id2];
-
-      if (geometry1 && geometry2) {
-        const newGeometry = BooleanOperations.join(geometry1, geometry2);
-        if (newGeometry) {
-          // Create a new object for the joined geometry
-          const newObject: SceneObjectData = {
-            id: `object_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            type: 'custom',
-            position: [0, 0, 0], // Or average position
-            rotation: [0, 0, 0],
-            scale: [1, 1, 1],
-          };
-
-          // Update state
-          setObjects(prev => [...prev.filter(o => o.id !== id1 && o.id !== id2), newObject]);
-          setObjectGeometries(prev => {
-            const newGeometries = { ...prev };
-            delete newGeometries[id1];
-            delete newGeometries[id2];
-            return { ...newGeometries, [newObject.id]: newGeometry };
-          });
-          setSelectedObjectIds([newObject.id]);
-          setCurrentTool('select'); // Switch back to select tool
-          requestStateSave();
-        }
-      }
+      handleJoinSelected();
     }
-  }, [currentTool, selectedObjectIds, objectGeometries, requestStateSave]);
+  }, [currentTool, handleJoinSelected, selectedObjectIds.length]);
 
   const orbitDisablingTools = getOrbitDisablingTools();
 
   return (
-    <div style={{ width: '100%', height: '100vh', position: 'relative' }}>
+    <div style={{
+      width: '100%',
+      height: '100vh',
+      position: 'relative',
+      background: 'radial-gradient(circle at top, rgba(20, 40, 80, 0.35), rgba(5, 7, 15, 0.95))',
+    }}>
       <Canvas
         camera={{ position: [10, 10, 10], fov: 50 }}
         onClick={handleCanvasClick}
@@ -246,6 +270,10 @@ export function ModelingCanvas() {
           selectedPrimitive={selectedPrimitive}
           brushSize={brushSize}
           brushStrength={brushStrength}
+          offsetDepthMm={offsetDepthMm}
+          extrudeDepthMm={extrudeDepthMm}
+          unitScaleMm={unitScaleMm}
+          measurePoints={measurePoints}
           symmetryAxes={symmetryAxes}
           selectedRenderMode={selectedRenderMode}
           onSelectObject={handleSelectObject}
@@ -259,6 +287,7 @@ export function ModelingCanvas() {
             setObjectGeometries(prev => ({ ...prev, [objectId]: geometry }));
           }}
           onRequestStateSave={saveCurrentState}
+          onMeasurePoint={handleMeasurePoint}
         />
 
         <OrbitControls
@@ -289,28 +318,32 @@ export function ModelingCanvas() {
         <>
           <MobileTouchHint />
           <MobileUI
-          currentTool={currentTool}
-          setCurrentTool={setCurrentTool}
-          selectedPrimitive={selectedPrimitive}
-          setSelectedPrimitive={setSelectedPrimitive}
-          brushSize={brushSize}
-          setBrushSize={setBrushSize}
-          brushStrength={brushStrength}
-          setBrushStrength={setBrushStrength}
-          symmetryAxes={symmetryAxes}
-          setSymmetryAxes={setSymmetryAxes}
-          selectedRenderMode={selectedRenderMode}
-          onRenderModeChange={setSelectedRenderMode}
-          onUndo={handleUndo}
-          onRedo={handleRedo}
-          canUndo={canUndo}
-          canRedo={canRedo}
-          onDeleteSelected={() => {
-            if (selectedObjectIds.length > 0) {
-              selectedObjectIds.forEach(handleDeleteObject);
-            }
-          }}
-          hasSelection={selectedObjectIds.length > 0}
+            currentTool={currentTool}
+            setCurrentTool={setCurrentTool}
+            selectedPrimitive={selectedPrimitive}
+            setSelectedPrimitive={setSelectedPrimitive}
+            brushSize={brushSize}
+            setBrushSize={setBrushSize}
+            brushStrength={brushStrength}
+            setBrushStrength={setBrushStrength}
+            offsetDepthMm={offsetDepthMm}
+            setOffsetDepthMm={setOffsetDepthMm}
+            extrudeDepthMm={extrudeDepthMm}
+            setExtrudeDepthMm={setExtrudeDepthMm}
+            symmetryAxes={symmetryAxes}
+            setSymmetryAxes={setSymmetryAxes}
+            selectedRenderMode={selectedRenderMode}
+            onRenderModeChange={setSelectedRenderMode}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            onDeleteSelected={() => {
+              if (selectedObjectIds.length > 0) {
+                selectedObjectIds.forEach(handleDeleteObject);
+              }
+            }}
+            hasSelection={selectedObjectIds.length > 0}
           />
         </>
       ) : (
@@ -336,22 +369,33 @@ export function ModelingCanvas() {
             objects={objects}
             selectedRenderMode={selectedRenderMode}
             objectVertexCounts={objectVertexCounts}
+            objectGeometries={objectGeometries}
+            unitScaleMm={unitScaleMm}
+            measurePoints={measurePoints}
             onDeselectObject={() => setSelectedObjectIds([])}
             onDeleteObject={handleDeleteObject}
+            onJoinSelected={handleJoinSelected}
             onRenderModeChange={setSelectedRenderMode}
             onObjectPositionChange={handleObjectPositionChange}
             onObjectRotationChange={handleObjectRotationChange}
             onObjectScaleChange={handleObjectScaleChange}
+            onUnitScaleChange={setUnitScaleMm}
+            onClearMeasurements={() => setMeasurePoints([null, null])}
           />
 
           <SculptingControls
             currentTool={currentTool}
             brushSize={brushSize}
             brushStrength={brushStrength}
+            offsetDepthMm={offsetDepthMm}
+            extrudeDepthMm={extrudeDepthMm}
+            unitScaleMm={unitScaleMm}
             selectedObjectIds={selectedObjectIds}
             symmetryAxes={symmetryAxes}
             onBrushSizeChange={setBrushSize}
             onBrushStrengthChange={setBrushStrength}
+            onOffsetDepthChange={setOffsetDepthMm}
+            onExtrudeDepthChange={setExtrudeDepthMm}
             onSymmetryChange={(axis, enabled) => {
               setSymmetryAxes(prev => ({ ...prev, [axis]: enabled }));
             }}
@@ -360,6 +404,8 @@ export function ModelingCanvas() {
           <StatusOverlay
             currentTool={currentTool}
             selectedPrimitive={selectedPrimitive}
+            measurePoints={measurePoints}
+            unitScaleMm={unitScaleMm}
           />
         </>
       )}

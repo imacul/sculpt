@@ -13,6 +13,10 @@ interface MobileUIProps {
   setBrushSize: (size: number) => void;
   brushStrength: number;
   setBrushStrength: (strength: number) => void;
+  offsetDepthMm: number;
+  setOffsetDepthMm: (depth: number) => void;
+  extrudeDepthMm: number;
+  setExtrudeDepthMm: (depth: number) => void;
   symmetryAxes: { x: boolean; y: boolean; z: boolean };
   setSymmetryAxes: (axes: { x: boolean; y: boolean; z: boolean }) => void;
 
@@ -38,6 +42,10 @@ export function MobileUI({
   setBrushSize,
   brushStrength,
   setBrushStrength,
+  offsetDepthMm,
+  setOffsetDepthMm,
+  extrudeDepthMm,
+  setExtrudeDepthMm,
   symmetryAxes,
   setSymmetryAxes,
   selectedRenderMode,
@@ -65,11 +73,15 @@ export function MobileUI({
     { type: 'add', icon: '+', label: 'Add' },
     { type: 'subtract', icon: '-', label: 'Subtract' },
     { type: 'push', icon: '→', label: 'Push' },
+    { type: 'offset', icon: '⇵', label: 'Offset' },
+    { type: 'extrude', icon: '⬆', label: 'Extrude' },
   ];
 
   const primitives: PrimitiveType[] = ['sphere', 'cube', 'cylinder', 'cone', 'torus'];
 
-  const isSculptTool = currentTool === 'add' || currentTool === 'subtract' || currentTool === 'push';
+  const isSculptTool = ['add', 'subtract', 'push', 'offset', 'extrude'].includes(currentTool);
+  const isDepthTool = currentTool === 'offset' || currentTool === 'extrude';
+  const depthValue = currentTool === 'offset' ? offsetDepthMm : extrudeDepthMm;
 
   // Close primitive selector when tool changes away from add-primitive
   useEffect(() => {
@@ -206,19 +218,43 @@ export function MobileUI({
             />
           </div>
 
-          <div className="mobile-control-group">
-            <label className="mobile-slider-label">
-              Strength: {Math.round(brushStrength * 100)}%
-            </label>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={brushStrength * 100}
-              onChange={(e) => setBrushStrength(parseInt(e.target.value) / 100)}
-              className="mobile-slider"
-            />
-          </div>
+          {isDepthTool ? (
+            <div className="mobile-control-group">
+              <label className="mobile-slider-label">
+                Depth: {depthValue.toFixed(1)} mm
+              </label>
+              <input
+                type="range"
+                min="0.1"
+                max="10"
+                step="0.1"
+                value={depthValue}
+                onChange={(e) => {
+                  const value = parseFloat(e.target.value);
+                  if (currentTool === 'offset') {
+                    setOffsetDepthMm(Number.isFinite(value) && value > 0 ? value : 0.1);
+                  } else {
+                    setExtrudeDepthMm(Number.isFinite(value) && value > 0 ? value : 0.1);
+                  }
+                }}
+                className="mobile-slider"
+              />
+            </div>
+          ) : (
+            <div className="mobile-control-group">
+              <label className="mobile-slider-label">
+                Strength: {Math.round(brushStrength * 100)}%
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={brushStrength * 100}
+                onChange={(e) => setBrushStrength(parseInt(e.target.value) / 100)}
+                className="mobile-slider"
+              />
+            </div>
+          )}
 
           <div className="mobile-control-group">
             <label className="mobile-slider-label">Symmetry:</label>
@@ -294,7 +330,10 @@ export function MobileUI({
           <div className="mobile-info">
             <p>Tool: {currentTool}</p>
             {currentTool === 'add-primitive' && <p>Shape: {selectedPrimitive}</p>}
-            {isSculptTool && <p>Strength: {Math.round(brushStrength * 100)}%</p>}
+            {isSculptTool && !isDepthTool && <p>Strength: {Math.round(brushStrength * 100)}%</p>}
+            {isDepthTool && (
+              <p>Depth: {depthValue.toFixed(2)} mm</p>
+            )}
           </div>
         </div>
       )}
@@ -316,9 +355,10 @@ export function MobileUI({
         .mobile-toolbar-top {
           display: flex;
           justify-content: space-between;
-          background: rgba(0, 0, 0, 0.8);
+          background: rgba(6, 10, 20, 0.85);
           padding: 8px;
-          backdrop-filter: blur(10px);
+          backdrop-filter: blur(12px);
+          border-bottom: 1px solid rgba(74, 144, 226, 0.2);
         }
 
         .mobile-tool-buttons {
@@ -329,10 +369,10 @@ export function MobileUI({
         .mobile-tool-btn {
           min-width: 40px;
           height: 40px;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(20, 28, 48, 0.9);
+          border: 1px solid rgba(74, 144, 226, 0.25);
           color: white;
-          border-radius: 4px;
+          border-radius: 8px;
           font-size: 18px;
           display: flex;
           align-items: center;
@@ -341,8 +381,9 @@ export function MobileUI({
         }
 
         .mobile-tool-btn.active {
-          background: #2196F3;
-          border-color: #2196F3;
+          background: rgba(74, 144, 226, 0.9);
+          border-color: rgba(74, 144, 226, 0.9);
+          box-shadow: 0 0 12px rgba(74, 144, 226, 0.45);
         }
 
         .mobile-quick-actions {
@@ -353,10 +394,10 @@ export function MobileUI({
         .mobile-action-btn {
           width: 40px;
           height: 40px;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(20, 28, 48, 0.9);
+          border: 1px solid rgba(74, 144, 226, 0.25);
           color: white;
-          border-radius: 4px;
+          border-radius: 8px;
           font-size: 20px;
           display: flex;
           align-items: center;
@@ -368,36 +409,37 @@ export function MobileUI({
         }
 
         .mobile-primitive-selector {
-          background: rgba(0, 0, 0, 0.8);
+          background: rgba(6, 10, 20, 0.85);
           padding: 8px;
           display: flex;
           gap: 8px;
           overflow-x: auto;
-          backdrop-filter: blur(10px);
+          backdrop-filter: blur(12px);
+          border-bottom: 1px solid rgba(74, 144, 226, 0.2);
         }
 
         .mobile-primitive-btn {
           padding: 8px 12px;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(20, 28, 48, 0.9);
+          border: 1px solid rgba(74, 144, 226, 0.25);
           color: white;
-          border-radius: 4px;
+          border-radius: 8px;
           white-space: nowrap;
         }
 
         .mobile-primitive-btn.active {
-          background: #4CAF50;
-          border-color: #4CAF50;
+          background: rgba(74, 144, 226, 0.9);
+          border-color: rgba(74, 144, 226, 0.9);
         }
 
         .mobile-sculpt-selector {
-          background: rgba(0, 0, 0, 0.9);
+          background: rgba(6, 10, 20, 0.9);
           padding: 8px;
           display: flex;
           flex-direction: column;
           gap: 4px;
-          backdrop-filter: blur(10px);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(12px);
+          border-bottom: 1px solid rgba(74, 144, 226, 0.2);
         }
 
         .mobile-sculpt-tool-btn {
@@ -405,17 +447,18 @@ export function MobileUI({
           align-items: center;
           gap: 12px;
           padding: 10px 12px;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(20, 28, 48, 0.9);
+          border: 1px solid rgba(74, 144, 226, 0.25);
           color: white;
-          border-radius: 4px;
+          border-radius: 8px;
           text-align: left;
           font-size: 14px;
         }
 
         .mobile-sculpt-tool-btn.active {
-          background: #2196F3;
-          border-color: #2196F3;
+          background: rgba(74, 144, 226, 0.9);
+          border-color: rgba(74, 144, 226, 0.9);
+          box-shadow: 0 0 12px rgba(74, 144, 226, 0.45);
         }
 
         .mobile-sculpt-tool-btn .tool-icon {
@@ -429,18 +472,19 @@ export function MobileUI({
         }
 
         .mobile-sculpt-button-container {
-          background: rgba(0, 0, 0, 0.8);
+          background: rgba(6, 10, 20, 0.85);
           padding: 8px;
-          backdrop-filter: blur(10px);
+          backdrop-filter: blur(12px);
+          border-bottom: 1px solid rgba(74, 144, 226, 0.2);
         }
 
         .mobile-sculpt-toggle-btn {
           width: 100%;
           padding: 10px;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(20, 28, 48, 0.9);
+          border: 1px solid rgba(74, 144, 226, 0.25);
           color: white;
-          border-radius: 4px;
+          border-radius: 8px;
           font-size: 14px;
           text-align: left;
           display: flex;
@@ -449,10 +493,10 @@ export function MobileUI({
         }
 
         .mobile-sculpt-controls {
-          background: rgba(0, 0, 0, 0.9);
+          background: rgba(6, 10, 20, 0.9);
           padding: 12px;
-          backdrop-filter: blur(10px);
-          border-top: 1px solid rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(12px);
+          border-top: 1px solid rgba(74, 144, 226, 0.2);
         }
 
         .mobile-control-group {
@@ -482,7 +526,7 @@ export function MobileUI({
         .mobile-slider::-webkit-slider-track {
           width: 100%;
           height: 4px;
-          background: rgba(255, 255, 255, 0.2);
+          background: rgba(74, 144, 226, 0.3);
           border-radius: 2px;
         }
 
@@ -491,10 +535,11 @@ export function MobileUI({
           appearance: none;
           width: 20px;
           height: 20px;
-          background: white;
+          background: #4a90e2;
           border-radius: 50%;
           cursor: pointer;
         }
+
 
         .mobile-symmetry-buttons {
           display: flex;
@@ -505,29 +550,30 @@ export function MobileUI({
         .mobile-symmetry-btn {
           flex: 1;
           padding: 8px;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(20, 28, 48, 0.9);
+          border: 1px solid rgba(74, 144, 226, 0.25);
           color: white;
-          border-radius: 4px;
+          border-radius: 8px;
           font-size: 14px;
           font-weight: bold;
           transition: all 0.2s;
         }
 
         .mobile-symmetry-btn.active {
-          background: #2196F3;
-          border-color: #2196F3;
+          background: rgba(74, 144, 226, 0.9);
+          border-color: rgba(74, 144, 226, 0.9);
         }
 
         .mobile-settings-panel {
           position: fixed;
           top: 60px;
           right: 8px;
-          background: rgba(0, 0, 0, 0.9);
-          border-radius: 8px;
+          background: rgba(6, 10, 20, 0.92);
+          border-radius: 12px;
+          border: 1px solid rgba(74, 144, 226, 0.25);
           padding: 12px;
           min-width: 200px;
-          backdrop-filter: blur(10px);
+          backdrop-filter: blur(12px);
         }
 
         .mobile-settings-header {
@@ -572,25 +618,25 @@ export function MobileUI({
         .mobile-render-btn {
           flex: 1;
           padding: 6px 12px;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(20, 28, 48, 0.9);
+          border: 1px solid rgba(74, 144, 226, 0.25);
           color: white;
-          border-radius: 4px;
+          border-radius: 8px;
           font-size: 12px;
         }
 
         .mobile-render-btn.active {
-          background: #2196F3;
-          border-color: #2196F3;
+          background: rgba(74, 144, 226, 0.9);
+          border-color: rgba(74, 144, 226, 0.9);
         }
 
         .mobile-delete-btn {
           width: 100%;
           padding: 8px;
-          background: #f44336;
-          border: none;
+          background: rgba(244, 67, 54, 0.9);
+          border: 1px solid rgba(255, 120, 120, 0.35);
           color: white;
-          border-radius: 4px;
+          border-radius: 8px;
           margin-bottom: 8px;
         }
 
